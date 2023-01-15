@@ -11,11 +11,17 @@ void WebServer::connect(const char *ssid, const char *password) {
   WiFi.begin(ssid, password);
 }
 
+void WebServer::setRoutes(std::map<String, std::tuple<String, int, String (*)()>> routes) {
+  this->routes = routes;  
+}
+
 bool WebServer::start() {
   if (WiFi.isConnected()) {
-    // server.addHandler(&globHandler);
-    server.on(UriBraces("/{}"), [this]() {
-      handleRequest(server.pathArg(0));
+    server.on(UriBraces("/{}"), HTTP_GET, [this]() {
+      handleRequest(server.pathArg(0), "GET");
+    });
+    server.on(UriBraces("/{}"), HTTP_POST, [this]() {
+      handleRequest(server.pathArg(0), "POST");
     });
     server.begin();
     return true;
@@ -68,16 +74,24 @@ void WebServer::stop() {
   WiFi.disconnect();
 }
 
-void WebServer::handleRequest(String uri) {
-  String response;
+void WebServer::handleRequest(String uri, String method) {
+  // Look for endpoint in the routes map
+  auto it = routes.find(uri);
+
   int status;
-  if (uri == "") {
-    response = buildHTML("<h2>home</h2>");
-    status = 200;
+  String response;
+
+  // If a value was found in the map and the method matches
+  if(it != routes.end() && method.equalsIgnoreCase(std::get<0>(it->second))) {
+    // Get the status from the value of the map
+    status = std::get<1>(it->second);
+    // Get the function whose return type is String and build the HTML with its result
+    response = buildHTML(std::get<2>(it->second)());
   } else {
-    response = buildHTML("<h2>Not Found</h2>");
     status = 404;
+    response = buildHTML("<h2>Not Found</h2>");
   }
+
   server.send(status, "text/html", response);
 }
 
@@ -88,4 +102,8 @@ String WebServer::buildHTML(String innerHTML) {
     + "</body></html>";
 
   return html;
+}
+
+long WebServer::getSignal() {
+  return WiFi.RSSI();
 }
