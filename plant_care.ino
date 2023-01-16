@@ -1,27 +1,35 @@
-// #include <LiquidCrystal_I2C.h>
-
-// LiquidCrystal_I2C lcd(0x27, 16, 2)
 #include "WebServer.h"
 #include "WifiCredentials.h"
 #include <map>
 #include <tuple>
 #include "DHTWrapper.h"
+#include "LCDWrapper.h"
 
-#define DHT_PIN_IN D5
+#define DHT_PIN D5
+#define I2C_ADDRESS 0x27
+#define DISPLAY_COLS 16
+#define DISPLAY_ROWS 2
 
 WebServer* ws;
 DHTWrapper* dht;
+LCDWrapper* lcd;
 
 void setup() {
   Serial.setDebugOutput(true);
   Serial.begin(9600);
 
+  dht = new DHTWrapper(DHT_PIN);
+  lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS);
+  lcd->display(0, 0, String("INIT LCD..."));
   initWebServer();
-  initDHT();
 }
 
 void loop() {
   ws->listen();
+  dht->update();
+  lcd->display(0, 0, String("Temp.: ") + String(dht->getTemperature(), 2));
+  lcd->display(1, 0, String("Hum.: ") + String(dht->getHumidity(), 2));
+  delay(1000);
 }
 
 /*
@@ -65,14 +73,4 @@ String status() {
 
 String setStatus() {
   return "<h2>POST request</h2>";
-}
-
-
-/*
-*******************
-Start DHT11 block
-*******************
-*/
-void initDHT() {
-  dht = new DHTWrapper(DHT_PIN_IN);
 }
