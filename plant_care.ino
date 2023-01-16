@@ -5,21 +5,23 @@
 #include "WifiCredentials.h"
 #include <map>
 #include <tuple>
+#include "DHTWrapper.h"
 
-WebServer ws;
+#define DHT_PIN_IN D5
+
+WebServer* ws;
+DHTWrapper* dht;
 
 void setup() {
-  // Serial.setDebugOutput(true);
+  Serial.setDebugOutput(true);
   Serial.begin(9600);
 
   initWebServer();
-  // lcd.init();
-  // lcd.backlight();
+  initDHT();
 }
 
 void loop() {
-  // displayData("prova", 0, 0);
-  ws.listen();
+  ws->listen();
 }
 
 /*
@@ -29,6 +31,7 @@ WebServer block
 */
 
 void initWebServer() {
+  ws = new WebServer();
   // Create routes
   std::map<String, std::tuple<String, int, String (*)()>> r = {
     { "", std::make_tuple("GET", 200, &home) },
@@ -36,15 +39,15 @@ void initWebServer() {
     { "set_status", std::make_tuple("POST", 200, &setStatus) }
   };
 
-  ws.setRoutes(r);
+  ws->setRoutes(r);
 
-  ws.connect(SSID, PASSWORD);
-  while (ws.getStatus() != "Connected") {
-    Serial.println(ws.getStatus());
+  ws->connect(SSID, PASSWORD);
+  while (ws->getStatus() != "Connected") {
+    Serial.println(ws->getStatus());
     delay(500);
   }
-  Serial.println(ws.getStatus() + " with IP " + ws.getIPAddress().toString().c_str());
-  if (ws.start()) {
+  Serial.println(ws->getStatus() + " with IP " + ws->getIPAddress().toString().c_str());
+  if (ws->start()) {
     Serial.println("Started webserver");
   } else {
     Serial.println("Couldn't start the webserver.");
@@ -57,20 +60,19 @@ String home() {
 }
 
 String status() {
-  return "<h2>Signal strength is" + String(ws.getSignal()) + "dB</h2>";
+  return "<h2>" + dht->update() + "</h2>";
 }
 
 String setStatus() {
   return "<h2>POST request</h2>";
 }
 
+
 /*
 *******************
-End WebServer block
+Start DHT11 block
 *******************
 */
-
-// void displayData(String msg, int line, int column) {
-//   lcd.setCursor(line, column);
-//   lcd.print(msg);
-// }
+void initDHT() {
+  dht = new DHTWrapper(DHT_PIN_IN);
+}

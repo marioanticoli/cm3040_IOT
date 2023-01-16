@@ -12,7 +12,7 @@ void WebServer::connect(const char *ssid, const char *password) {
 }
 
 void WebServer::setRoutes(std::map<String, std::tuple<String, int, String (*)()>> routes) {
-  this->routes = routes;  
+  this->routes = routes;
 }
 
 bool WebServer::start() {
@@ -82,7 +82,7 @@ void WebServer::handleRequest(String uri, String method) {
   String response;
 
   // If a value was found in the map and the method matches
-  if(it != routes.end() && method.equalsIgnoreCase(std::get<0>(it->second))) {
+  if (it != routes.end() && method.equalsIgnoreCase(std::get<0>(it->second))) {
     // Get the status from the value of the map
     status = std::get<1>(it->second);
     // Get the function whose return type is String and build the HTML with its result
@@ -96,7 +96,7 @@ void WebServer::handleRequest(String uri, String method) {
 }
 
 String WebServer::buildHTML(String innerHTML) {
-  String html = 
+  String html =
     "<!DOCTYPE html><html><head><meta http-equiv=\"refresh\" content=\"2\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body> <h1>Plant Care Dashboard</h1>"
     + innerHTML
     + "</body></html>";
