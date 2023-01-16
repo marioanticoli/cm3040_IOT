@@ -1,13 +1,13 @@
 #ifndef SoilSensor_h
 #define SoilSensor_h
-#include "Arduino.h" 
+#include "Arduino.h"
 
 class SoilSensor {
-public:
-  SoilSensor(int pin);
-  int get_humidity();
-  void print();
 private:
   int pin;
+
+public:
+  SoilSensor(int pin);
+  long get_humidity();
 };
 #endif

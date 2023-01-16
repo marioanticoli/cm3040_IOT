@@ -4,8 +4,10 @@
 #include <tuple>
 #include "DHTWrapper.h"
 #include "LCDWrapper.h"
+#include "SoilSensor.h"
 
 #define DHT_PIN D5
+#define SOIL_SENSOR_PIN A0
 #define I2C_ADDRESS 0x27
 #define DISPLAY_COLS 16
 #define DISPLAY_ROWS 2
@@ -13,23 +15,24 @@
 WebServer* ws;
 DHTWrapper* dht;
 LCDWrapper* lcd;
+SoilSensor* soilSensor;
 
 void setup() {
   Serial.setDebugOutput(true);
   Serial.begin(9600);
 
   dht = new DHTWrapper(DHT_PIN);
-  lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS);
-  lcd->display(0, 0, String("INIT LCD..."));
+  lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS, true);
+  soilSensor = new SoilSensor(SOIL_SENSOR_PIN);
   initWebServer();
+  lcd->display(0, 0, dht->update());  
 }
 
 void loop() {
   ws->listen();
-  dht->update();
-  lcd->display(0, 0, String("Temp.: ") + String(dht->getTemperature(), 2));
-  lcd->display(1, 0, String("Hum.: ") + String(dht->getHumidity(), 2));
-  delay(1000);
+  // lcd->clear();
+  lcd->display(1, 0, String("Soil: ") + String(soilSensor->get_humidity()));
+  delay(15000);
 }
 
 /*
