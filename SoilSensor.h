@@ -4,10 +4,10 @@
 
 class SoilSensor {
 private:
-  int pin;
+  uint pin;
 
 public:
-  SoilSensor(int pin);
+  SoilSensor(uint pin);
   long get_humidity();
 };
 #endif

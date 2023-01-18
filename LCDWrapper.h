@@ -13,10 +13,12 @@ private:
   uint8_t cols;
   uint8_t rows;
   LiquidCrystal_I2C lcd;
+  bool on;
 
 public:
   LCDWrapper(uint8_t, uint8_t, uint8_t, bool=false);
   bool display(uint8_t, uint8_t, String);
+  void toggle();
   void clear();
 };
 

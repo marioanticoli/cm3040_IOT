@@ -6,9 +6,10 @@ LCDWrapper::LCDWrapper(uint8_t address, uint8_t cols, uint8_t rows, bool allowSc
   lcd.init();
   lcd.backlight();
   lcd.clear();
-  if(allowScroll) {
+  if (allowScroll) {
     lcd.autoscroll();
   }
+  on = true;
 }
 
 bool LCDWrapper::display(uint8_t line, uint8_t column, String msg) {
@@ -24,4 +25,15 @@ bool LCDWrapper::display(uint8_t line, uint8_t column, String msg) {
 
 void LCDWrapper::clear() {
   lcd.clear();
+}
+
+void LCDWrapper::toggle() {
+  if (on) {
+    lcd.noBacklight();
+  } else {
+    lcd.init();
+    lcd.backlight();
+    lcd.clear();
+  }
+  on = !on;
 }

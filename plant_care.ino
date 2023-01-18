@@ -5,34 +5,56 @@
 #include "DHTWrapper.h"
 #include "LCDWrapper.h"
 #include "SoilSensor.h"
+#include "IRWrapper.h"
 
-#define DHT_PIN D5
+#define IR_PIN D5
+#define DHT_PIN D6
 #define SOIL_SENSOR_PIN A0
 #define I2C_ADDRESS 0x27
 #define DISPLAY_COLS 16
 #define DISPLAY_ROWS 2
+#define LCD_AUTOSCROLL false
+#define LCD_PERIOD_SEC 1
+
+uint now;
+uint lcdLastUpdate;
 
 WebServer* ws;
 DHTWrapper* dht;
 LCDWrapper* lcd;
 SoilSensor* soilSensor;
+IRWrapper* ir;
+uint32_t command;
 
 void setup() {
   Serial.setDebugOutput(true);
   Serial.begin(9600);
 
   dht = new DHTWrapper(DHT_PIN);
-  lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS, true);
+  lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS, LCD_AUTOSCROLL);
+  ir = new IRWrapper(IR_PIN);
   soilSensor = new SoilSensor(SOIL_SENSOR_PIN);
   initWebServer();
-  lcd->display(0, 0, dht->update());  
+
+  lcdLastUpdate = millis() / 1000;
 }
 
 void loop() {
   ws->listen();
-  // lcd->clear();
-  lcd->display(1, 0, String("Soil: ") + String(soilSensor->get_humidity()));
-  delay(15000);
+  if(uint32_t res = ir->getInput()) {
+    if(res == IRWrapper::Key::POWER) {
+      lcd->toggle();
+    }    
+  }
+
+  // It will eventually overflow but it might just skip an update and restart from 0
+  now = millis() / 1000;
+  if (now - lcdLastUpdate >= LCD_PERIOD_SEC) {
+    // lcd->display(0, 0, dht->update());
+    lcd->display(0, 0, String("Uptime: ") + String(now));
+    lcd->display(1, 0, String("Soil: ") + String(soilSensor->get_humidity()));
+    lcdLastUpdate = now;
+  }
 }
 
 /*
