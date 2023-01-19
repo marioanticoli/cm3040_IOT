@@ -7,7 +7,7 @@ private:
   uint pin;
 
 public:
-  SoilSensor(uint pin);
+  SoilSensor(uint8_t);
   long get_humidity();
 };
 #endif
