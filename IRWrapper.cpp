@@ -2,6 +2,7 @@
 
 IRWrapper::IRWrapper(uint8_t pin)
   : receiver(IRrecv(pin)) {
+  pinMode(pin, INPUT);
   // Start the receiver
   receiver.enableIRIn();
   Serial.print(F("Ready to receive IR signals"));
