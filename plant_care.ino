@@ -6,30 +6,37 @@
 #include "LCDWrapper.h"
 #include "SoilSensor.h"
 #include "IRWrapper.h"
+#include "WaterPump.h"
 
 #define IR_PIN D5
 #define DHT_PIN D6
 #define SOIL_SENSOR_PIN A0
+#define WATER_PUMP_PIN D8
 #define I2C_ADDRESS 0x27
 #define DISPLAY_COLS 16
 #define DISPLAY_ROWS 2
 #define LCD_AUTOSCROLL false
-#define LCD_PERIOD_SEC 1
+#define LCD_PERIOD_MS 1000
+#define WATER_PUMP_PERIOD_MS 100
 
 uint now;
 uint lcdLastUpdate;
+uint pumpLastUpdate;
 
 WebServer* ws;
 DHTWrapper* dht;
 LCDWrapper* lcd;
 SoilSensor* soilSensor;
 IRWrapper* ir;
+WaterPump* pump;
+
 uint32_t command;
 
 void setup() {
   Serial.setDebugOutput(true);
   Serial.begin(9600);
 
+  pump = new WaterPump(WATER_PUMP_PIN);
   dht = new DHTWrapper(DHT_PIN);
   lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS, LCD_AUTOSCROLL);
   ir = new IRWrapper(IR_PIN);
@@ -40,19 +47,29 @@ void setup() {
 }
 
 void loop() {
+  now = millis();
+
   ws->listen();
-  if(uint32_t res = ir->getInput()) {
-    if(res == IRWrapper::Key::POWER) {
+  if (uint32_t res = ir->getInput()) {
+    if (res == IRWrapper::Key::POWER) {
       lcd->toggle();
-    }    
+    }
+  }
+
+  long humidity = soilSensor->get_humidity();
+  if (now - pumpLastUpdate >= WATER_PUMP_PERIOD_MS) {
+    if (humidity > 50) {
+      pump->on();
+    } else {
+      pump->off();
+    }
   }
 
   // It will eventually overflow but it might just skip an update and restart from 0
-  now = millis() / 1000;
-  if (now - lcdLastUpdate >= LCD_PERIOD_SEC) {
+  if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
     // lcd->display(0, 0, dht->update());
     lcd->display(0, 0, String("Uptime: ") + String(now));
-    lcd->display(1, 0, String("Soil: ") + String(soilSensor->get_humidity()));
+    lcd->display(1, 0, String("Soil: ") + String(humidity));
     lcdLastUpdate = now;
   }
 }

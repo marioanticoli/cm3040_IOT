@@ -3,11 +3,12 @@
 #include "Arduino.h" 
 
 class WaterPump {
+private:
+  uint8_t pin;
+
 public:
-  WaterPump(int pin);
+  WaterPump(uint8_t);
   void on();
   void off();
-private:
-  int pin;
 };
 #endif
