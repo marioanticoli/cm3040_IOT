@@ -4,9 +4,9 @@
 #include <tuple>
 #include "DHTWrapper.h"
 #include "LCDWrapper.h"
-#include "SoilSensor.h"
+#include "AnalogReader.h"
 #include "IRWrapper.h"
-#include "WaterPump.h"
+#include "RelayController.h"
 
 #define DISPLAY_COLS 16
 #define DISPLAY_ROWS 2
@@ -23,6 +23,9 @@
 #define SOIL_SENSOR_PIN A0
 // #define PHOTO_SENSOR_PIN A0
 
+#define DRY_VALUE 740
+#define WET_VALUE 288
+
 #define LCD_PERIOD_MS 1000
 
 uint now;
@@ -31,9 +34,9 @@ uint lcdLastUpdate;
 WebServer* ws;
 DHTWrapper* dht;
 LCDWrapper* lcd;
-SoilSensor* soilSensor;
+AnalogReader* soilSensor;
 IRWrapper* ir;
-WaterPump* pump;
+RelayController* pump;
 
 uint32_t command;
 
@@ -41,11 +44,11 @@ void setup() {
   Serial.setDebugOutput(true);
   Serial.begin(9600);
 
-  pump = new WaterPump(WATER_PUMP_PIN);
+  pump = new RelayController(WATER_PUMP_PIN);
   dht = new DHTWrapper(DHT_PIN);
   lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS, LCD_AUTOSCROLL);
   ir = new IRWrapper(IR_PIN);
-  soilSensor = new SoilSensor(SOIL_SENSOR_PIN);
+  soilSensor = new AnalogReader(SOIL_SENSOR_PIN, WET_VALUE, DRY_VALUE);
   initWebServer();
 
   lcdLastUpdate = millis() / 1000;
@@ -61,7 +64,7 @@ void loop() {
     }
   }
 
-  long humidity = soilSensor->get_humidity();
+  long humidity = soilSensor->get_perc_value();
   if (humidity > 50) {
     pump->on();
   } else {
