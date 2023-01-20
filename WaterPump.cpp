@@ -3,14 +3,29 @@
 // Work with 3 pin relay in NC
 WaterPump::WaterPump(uint8_t pin)
   : pin(pin) {
+
   pinMode(pin, OUTPUT);
-  off();
+  active = false;
 };
 
-void WaterPump::on() {
-  digitalWrite(pin, LOW);
+void WaterPump::on() {  
+  if (!active) {
+    digitalWrite(pin, LOW);
+    active = true;
+  }
 };
 
 void WaterPump::off() {
-  digitalWrite(pin, HIGH);
+  if (active) {
+    digitalWrite(pin, HIGH);
+    active = false;
+  }
+};
+
+void WaterPump::toggle() {
+  if (active) {
+    off();
+  } else {
+    on();
+  }
 };

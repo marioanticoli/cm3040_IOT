@@ -8,20 +8,25 @@
 #include "IRWrapper.h"
 #include "WaterPump.h"
 
-#define IR_PIN D5
-#define DHT_PIN D6
-#define SOIL_SENSOR_PIN A0
-#define WATER_PUMP_PIN D8
-#define I2C_ADDRESS 0x27
 #define DISPLAY_COLS 16
 #define DISPLAY_ROWS 2
 #define LCD_AUTOSCROLL false
+#define I2C_ADDRESS 0x27
+// D1 SCL
+// D2 SDA
+// D3 FREE
+#define WATER_PUMP_PIN D4
+#define IR_PIN D5
+#define DHT_PIN D6
+#define LED_PIN D7
+// D8 FREE
+#define SOIL_SENSOR_PIN A0
+// #define PHOTO_SENSOR_PIN A0
+
 #define LCD_PERIOD_MS 1000
-#define WATER_PUMP_PERIOD_MS 100
 
 uint now;
 uint lcdLastUpdate;
-uint pumpLastUpdate;
 
 WebServer* ws;
 DHTWrapper* dht;
@@ -57,18 +62,15 @@ void loop() {
   }
 
   long humidity = soilSensor->get_humidity();
-  if (now - pumpLastUpdate >= WATER_PUMP_PERIOD_MS) {
-    if (humidity > 50) {
-      pump->on();
-    } else {
-      pump->off();
-    }
+  if (humidity > 50) {
+    pump->on();
+  } else {
+    pump->off();
   }
 
   // It will eventually overflow but it might just skip an update and restart from 0
   if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
-    // lcd->display(0, 0, dht->update());
-    lcd->display(0, 0, String("Uptime: ") + String(now));
+    lcd->display(0, 0, dht->update());
     lcd->display(1, 0, String("Soil: ") + String(humidity));
     lcdLastUpdate = now;
   }

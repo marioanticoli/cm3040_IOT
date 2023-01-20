@@ -4,7 +4,7 @@
 
 DHTWrapper::DHTWrapper(uint8_t pin, uint8_t type)
   : dht(DHT(pin, type)) {
-  pinMode(pin, INPUT);  
+  pinMode(pin, INPUT);
   dht.begin();
 }
 
@@ -23,5 +23,5 @@ float DHTWrapper::getHumidity() {
 }
 
 String DHTWrapper::toString() {
-  return "Temp.: " + String(temperature, 2) + "C - Hum.: " + String(humidity, 2) + "%";
+  return String("Temp.: ") + String(temperature, 2) + String("C - Hum.: ") + String(humidity, 2) + String("%");
 }
