@@ -3,10 +3,7 @@
 #include "Arduino.h"
 #include <LiquidCrystal_I2C.h>
 
-/*
-Serial Clock (SCL) on pin D1
-Serial Data (SDA) on pin D2
-*/
+// Wrapper class for LCD
 
 class LCDWrapper {
 private:
@@ -16,9 +13,13 @@ private:
   bool on;
 
 public:
-  LCDWrapper(uint8_t, uint8_t, uint8_t, bool=false);
+  // Initialise an LCD at an address with given rows and columns
+  LCDWrapper(uint8_t, uint8_t, uint8_t);
+  // Display at row, col a given message
   bool display(uint8_t, uint8_t, String);
+  // Turn on and off the display
   void toggle();
+  // Clear the display
   void clear();
 };
 

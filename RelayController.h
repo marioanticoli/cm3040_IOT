@@ -6,19 +6,15 @@ class RelayController {
 private:
   uint8_t pin;
   bool active;
-  bool mode;
-
-  enum mode {
-    NO = true,
-    NC = false
-  };
-
-  void write();
 
 public:
-  RelayController(uint8_t, bool=true);
+  // Initialise a relay to pin
+  RelayController(uint8_t);
+  // Switch relay on
   void on();
+  // Switch relay off
   void off();
+  // Toggle relay state
   void toggle();
 };
 #endif

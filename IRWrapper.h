@@ -1,16 +1,22 @@
 #ifndef IRWrapper_h
 #define IRWrapper_h
-
 #include <IRrecv.h>
+
+#define DEFAULT_DEBOUNCE 200
+// Wrapper class to IR receiver
 
 class IRWrapper {
 private:
   IRrecv receiver;
+  uint16_t debounce;
 
 public:
-  IRWrapper(uint8_t);
+  // Initialise an IR receiver to a pin and a debounce in ms (defaults to DEFAULT_DEBOUNCE)
+  IRWrapper(uint8_t, uint16_t = DEFAULT_DEBOUNCE);
+  // Returns the HEX code received
   uint32_t getInput();
 
+  // Mapping of received values
   enum Key {
     POWER = 0xFFA25D,
     FUNC_STOP = 0xFFE21D,

@@ -1,19 +1,15 @@
 #include "Arduino.h"
 #include "LCDWrapper.h"
 
-LCDWrapper::LCDWrapper(uint8_t address, uint8_t cols, uint8_t rows, bool allowScroll)
+LCDWrapper::LCDWrapper(uint8_t address, uint8_t cols, uint8_t rows)
   : lcd(LiquidCrystal_I2C(address, cols, rows)), cols(cols), rows(rows) {
-  lcd.init();
-  lcd.backlight();
-  lcd.clear();
-  if (allowScroll) {
-    lcd.autoscroll();
-  }
-  on = true;
+  on = false;
+  toggle();
 }
 
 bool LCDWrapper::display(uint8_t line, uint8_t column, String msg) {
   Serial.println(msg);
+  // Display if position within the limits of the LCD
   if (line < rows && column < cols) {
     lcd.setCursor(column, line);
     lcd.print(msg);

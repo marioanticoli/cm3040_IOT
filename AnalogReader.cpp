@@ -1,7 +1,8 @@
 #include "AnalogReader.h"
 
-AnalogReader::AnalogReader(uint8_t pin, uint min, uint max): pin(pin), min(min), max(max) {
-    pinMode(pin, INPUT);
+AnalogReader::AnalogReader(uint8_t pin, uint min, uint max)
+  : pin(pin), min(min), max(max) {
+  pinMode(pin, INPUT);
 };
 
 long AnalogReader::get_perc_value() {

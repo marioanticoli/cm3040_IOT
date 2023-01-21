@@ -2,7 +2,7 @@
 #define DigitalOutput_h
 #include "Arduino.h"
 
-// Class to help manage Digital Outputs
+// Class to manage digital output
 
 class DigitalOutput {
 private:

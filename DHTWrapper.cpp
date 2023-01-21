@@ -8,10 +8,9 @@ DHTWrapper::DHTWrapper(uint8_t pin, uint8_t type)
   dht.begin();
 }
 
-String DHTWrapper::update() {
+void DHTWrapper::update() {
   temperature = dht.readTemperature();
   humidity = dht.readHumidity();
-  return toString();
 }
 
 float DHTWrapper::getTemperature() {

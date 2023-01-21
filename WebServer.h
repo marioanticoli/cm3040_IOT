@@ -5,6 +5,9 @@
 #include <map>
 #include <tuple>
 
+// Class to manage a simple WebServer
+// It can respond to GET and POST of user-defined routes
+
 class WebServer {
 private:
   // Map of tuple containing method, status code, pointer to function
@@ -14,15 +17,22 @@ private:
   String buildHTML(String);
 
 public:
-  WebServer();
+  // Initialise the webserver to given port (default 80)
+  WebServer(uint16_t = 80);
+  // Connect to the wifi
   void connect(const char*, const char*);
+  // Start webserver
   bool start();
+  // Stop webserver
   void stop();
+  // Get connection status
   String getStatus();
+  // Get local IP address
   IPAddress getIPAddress();
+  // Accepts incoming requests
   void listen();
+  // Set user-defined routes
   void setRoutes(std::map<String, std::tuple<String, int, String (*)()>>);
-  long getSignal();
 };
 
 #endif

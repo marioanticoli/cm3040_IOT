@@ -3,8 +3,8 @@
 #include <uri/UriBraces.h>
 #include "WebServer.h"
 
-WebServer::WebServer()
-  : server(80) {
+WebServer::WebServer(uint16_t port)
+  : server(port) {
 }
 
 void WebServer::connect(const char *ssid, const char *password) {
@@ -85,9 +85,10 @@ void WebServer::handleRequest(String uri, String method) {
   if (it != routes.end() && method.equalsIgnoreCase(std::get<0>(it->second))) {
     // Get the status from the value of the map
     status = std::get<1>(it->second);
-    // Get the function whose return type is String and build the HTML with its result
+    // Get the function which return type is String and build the HTML with its result
     response = buildHTML(std::get<2>(it->second)());
   } else {
+    // If no routes found
     status = 404;
     response = buildHTML("<h2>Not Found</h2>");
   }
@@ -102,8 +103,4 @@ String WebServer::buildHTML(String innerHTML) {
     + "</body></html>";
 
   return html;
-}
-
-long WebServer::getSignal() {
-  return WiFi.RSSI();
 }

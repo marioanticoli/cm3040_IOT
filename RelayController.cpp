@@ -1,15 +1,15 @@
 #include "RelayController.h"
 
-// Work with 3 pin relay
-// mode controls NO(=true), NC(=false)
-RelayController::RelayController(uint8_t pin, bool mode)
-  : pin(pin), mode(mode) {
+// Class to control a 3 pin relay in
+
+RelayController::RelayController(uint8_t pin)
+  : pin(pin) {
 
   pinMode(pin, OUTPUT);
   active = false;
 };
 
-void RelayController::on() {  
+void RelayController::on() {
   if (!active) {
     digitalWrite(pin, LOW);
     active = true;
@@ -30,7 +30,3 @@ void RelayController::toggle() {
     on();
   }
 };
-
-void RelayController::write() {
-}
-
