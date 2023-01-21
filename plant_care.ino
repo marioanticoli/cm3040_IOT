@@ -2,16 +2,16 @@
 #include "WifiCredentials.h"
 #include <map>
 #include <tuple>
+#include "Menu.h"
 #include "DHTWrapper.h"
 #include "LCDWrapper.h"
 #include "AnalogReader.h"
 #include "IRWrapper.h"
-#include "RelayController.h"
+#include "NCRelayController.h"
 #include "DigitalOutput.h"
 
 #define DISPLAY_COLS 16
 #define DISPLAY_ROWS 2
-#define LCD_AUTOSCROLL false
 #define I2C_ADDRESS 0x27
 // D1 SCL
 // D2 SDA
@@ -19,7 +19,7 @@
 #define WATER_PUMP_PIN D4
 #define IR_PIN D5
 #define DHT_PIN D6
-#define MUX_PIN D7  // Using 1 pin instead of canonical 3 allows me to control two inputs on the multiplexer, remaining PINs are set to 0 (GND)
+#define MUX_PIN D7  // Using 1 pin instead of the canonical 3 allows me to control two inputs on the multiplexer, remaining PINs are set to 0 (GND)
 #define LED_PIN D8
 #define SOIL_SENSOR_PIN A0
 #define PHOTO_PIN A0
@@ -35,28 +35,34 @@ uint now;
 // LCD last updated time
 uint lcdLastUpdate;
 
-// Declare objects in global scope
+// Declare pointer to objects in global scope
 WebServer* ws;
 DHTWrapper* dht;
 LCDWrapper* lcd;
 AnalogReader* soilSensor;
 AnalogReader* photo;
 IRWrapper* ir;
-RelayController* pump;
+NCRelayController* pump;
 DigitalOutput* mux;
 DigitalOutput* led;
+Menu* menu;
 
 // Holds the input from the IR receiver
-uint32_t command;
+// uint32_t command;
+
+// Show menu or sensor data;
+bool showMenu;
 
 void setup() {
   // Serial.setDebugOutput(true);
   Serial.begin(9600);
 
+  menu = new Menu();
+
   // Initialise sensors, relays and outputs
-  pump = new RelayController(WATER_PUMP_PIN);
+  pump = new NCRelayController(WATER_PUMP_PIN);
   dht = new DHTWrapper(DHT_PIN);
-  lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS, LCD_AUTOSCROLL);
+  lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS);
   ir = new IRWrapper(IR_PIN);
   soilSensor = new AnalogReader(SOIL_SENSOR_PIN, WET_VALUE, DRY_VALUE);
   photo = new AnalogReader(PHOTO_PIN, DARK_VALUE, LIGHT_VALUE);
@@ -66,34 +72,55 @@ void setup() {
   initWebServer();
 
   lcdLastUpdate = millis() / 1000;
+  showMenu = false;
 }
 
 void loop() {
   now = millis();
 
+  // Read DHT11
+  dht->update();
+  // Read analog sensor and switch the multiplexer to allow reading the other
+  long soilHum = soilSensor->get_perc_value();
+  mux->toggle();
+  long light = photo->get_perc_value();
+  mux->toggle();
+
   // Listen to incoming requests to the webserver
   ws->listen();
 
-  // Check if IR received a command and pass it to a Menu instance
+  // Check if IR received a command and pass it to the Menu instance
   if (uint32_t res = ir->getInput()) {
-    // TODO: pass res to menu
+    if (res == IRWrapper::key::FUNC_STOP) {
+      toggleShowMenu();
+    }
+    // TODO
+    // menuHandler(menu->getAction(res));
   }
 
-  long soilHum = soilSensor->get_perc_value();
-  long light = photo->get_perc_value();
   // TODO: pass to plantSettings and check if need water and/or light
 
   if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
-    // TODO: if menu off show sensor data
-    // else show menu
+    if (showMenu) {
+      lcd->display(0, 0, menu->display());
+    } else {
+      showSensorData(soilHum, light);
+    }
     lcdLastUpdate = now;
   }
 }
 
-void showSensorDate() {
+void toggleShowMenu() {
+  showMenu = !showMenu;
+}
+
+void menuHandler(Menu::action act) {
   // TODO
-  lcd->display(0, 0, dht->update());
-  lcd->display(1, 0, String("Soil: ") + String(humidity));
+}
+
+void showSensorData(long humidity, long light) {
+  lcd->display(0, 0, "Light level: " + String(light) + "%");
+  lcd->display(1, 0, "Soil: " + String(humidity) + "%");
 }
 
 /*
@@ -103,12 +130,15 @@ WebServer block
 */
 
 void initWebServer() {
-  ws = new WebServer();
+  String openHTML = "<!DOCTYPE html><html><head><meta http-equiv=\"refresh\" content=\"2\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body><nav><ul><li><a href=\"/\">Environment readings</a></li><li><a href=\"/light\">Control lights</a></li><li><a href=\"/pump\">Control pump</a></li></ul></nav><h1>Plant Care Dashboard</h1>";
+  String closeHTML = "</body></html>";
+  ws = new WebServer(openHTML, closeHTML);
   // Create routes
   std::map<String, std::tuple<String, int, String (*)()>> r = {
     { "", std::make_tuple("GET", 200, &status) },
-    // TODO: check status code
+    { "/light", std::make_tuple("GET", 200, &lightsControl) },
     { "/light", std::make_tuple("POST", 200, &setLights) },
+    { "/pump", std::make_tuple("GET", 200, &pumpControl) },
     { "/pump", std::make_tuple("POST", 200, &setPump) },
   };
 
@@ -129,14 +159,39 @@ void initWebServer() {
 
 // Callbacks for handling routes
 String status() {
-  // TODO: give a good overview
-  return "<h2>" + dht->update() + "</h2>";
+  String pumpStatus = pump->isActive() ? "ON" : "OFF";
+  String lightStatus = led->isActive() ? "ON" : "OFF";
+  String sensors = "<h2>Environment readings</h2><p>Temperature: " + String(dht->getTemperature()) + "&deg;C</p><p>Humidity: " + String(dht->getHumidity()) + "%</p><p>Luminosity: " + String(photo->get_perc_value()) + "%</p><p>Soil humidity: " + String(soilSensor->get_perc_value()) + "%</p>";
+  String actuators = "<h2>Actuators status</h2><p>Water pump: " + pumpStatus + "</p><p>Light: " + lightStatus + "</p>";
+  return sensors + "<hr />" + actuators;
+}
+
+
+String lightsControl() {
+  return setStr(led->isActive(), "/lights", "lights");
+}
+
+String pumpControl() {
+  return setStr(pump->isActive(), "/pump", "pump");
+}
+
+String setStr(bool status, String endpoint, String output) {
+  String val = status ? "OFF" : "ON";
+  return "<form action=\"" + endpoint + "\"><p>Set the status of the " + output + ":</p><input type=\"hidden\" name=\"status\" value=\"" + val + "\"><input type=\"submit\" value=\"Turn " + val + "\"></form>";
 }
 
 String setLights() {
   // TODO
+  led->toggle();
+  return statusStr(led->isActive(), "Lights");
 }
 
 String setPump() {
   // TODO
+  pump->toggle();
+  return statusStr(pump->isActive(), "Pump");
+}
+
+String statusStr(bool status, String output) {
+  return String(output + " is currently " + status ? "ON" : "OFF");
 }
