@@ -3,8 +3,8 @@
 #include <uri/UriBraces.h>
 #include "WebServer.h"
 
-WebServer::WebServer(uint16_t port)
-  : server(port) {
+WebServer::WebServer(String openHTML, String closeHTML, uint16_t port)
+  : server(port), openHTML(openHTML), closeHTML(closeHTML) {
 }
 
 void WebServer::connect(const char *ssid, const char *password) {
@@ -85,7 +85,7 @@ void WebServer::handleRequest(String uri, String method) {
   if (it != routes.end() && method.equalsIgnoreCase(std::get<0>(it->second))) {
     // Get the status from the value of the map
     status = std::get<1>(it->second);
-    // Get the function which return type is String and build the HTML with its result
+    // Get the function whose return type is String and build the HTML with its result
     response = buildHTML(std::get<2>(it->second)());
   } else {
     // If no routes found
@@ -97,10 +97,5 @@ void WebServer::handleRequest(String uri, String method) {
 }
 
 String WebServer::buildHTML(String innerHTML) {
-  String html =
-    "<!DOCTYPE html><html><head><meta http-equiv=\"refresh\" content=\"2\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body> <h1>Plant Care Dashboard</h1>"
-    + innerHTML
-    + "</body></html>";
-
-  return html;
+  return openHTML + innerHTML + closeHTML;
 }
