@@ -9,20 +9,6 @@ RelayController::RelayController(uint8_t pin)
   active = false;
 };
 
-void RelayController::on() {
-  if (!active) {
-    digitalWrite(pin, LOW);
-    active = true;
-  }
-};
-
-void RelayController::off() {
-  if (active) {
-    digitalWrite(pin, HIGH);
-    active = false;
-  }
-};
-
 void RelayController::toggle() {
   if (active) {
     off();
@@ -30,3 +16,7 @@ void RelayController::toggle() {
     on();
   }
 };
+
+bool RelayController::isActive() {
+  return active;
+}
