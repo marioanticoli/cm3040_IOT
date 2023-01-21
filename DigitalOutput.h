@@ -7,11 +7,12 @@
 class DigitalOutput {
 private:
   uint8_t pin;
-  bool state;
+  bool active;
 
 public:
   // Initialise a digital output to a pin and a state false = LOW (default), true = HIGH
   DigitalOutput(uint8_t, bool = false);
-  void toggleState();
+  void toggle();
+  bool isActive();
 };
 #endif

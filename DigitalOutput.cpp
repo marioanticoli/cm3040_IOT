@@ -1,13 +1,17 @@
 #include "DigitalOutput.h"
 
-DigitalOutput::DigitalOutput(uint8_t pin, bool state)
-  : pin(pin), state(state) {
+DigitalOutput::DigitalOutput(uint8_t pin, bool active)
+  : pin(pin), active(active) {
   pinMode(pin, OUTPUT);
-  toggleState();
+  toggle();
 };
 
 // Change the state of the digital output; LOW -> HIGH or HIGH -> LOW
-void DigitalOutput::toggleState() {
-  digitalWrite(pin, state ? LOW : HIGH);
-  state = !state;
+void DigitalOutput::toggle() {
+  digitalWrite(pin, active ? LOW : HIGH);
+  active = !active;
+}
+
+bool DigitalOutput::isActive() {
+  return active;
 }
