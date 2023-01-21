@@ -13,11 +13,11 @@ private:
 public:
   // Initialise an IR receiver to a pin and a debounce in ms (defaults to DEFAULT_DEBOUNCE)
   IRWrapper(uint8_t, uint16_t = DEFAULT_DEBOUNCE);
-  // Returns the HEX code received
+  // Returns the code received
   uint32_t getInput();
 
   // Mapping of received values
-  enum Key {
+  enum key {
     POWER = 0xFFA25D,
     FUNC_STOP = 0xFFE21D,
     VOL_UP = 0xFF629D,
