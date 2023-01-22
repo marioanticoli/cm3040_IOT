@@ -6,10 +6,27 @@ DigitalOutput::DigitalOutput(uint8_t pin, bool active)
   toggle();
 };
 
+void DigitalOutput::on() {
+  if (!active) {
+    digitalWrite(pin, HIGH);
+    active = true;
+  }
+}
+
+void DigitalOutput::off() {
+  if (active) {
+    digitalWrite(pin, LOW);
+    active = false;
+  }
+};
+
 // Change the state of the digital output; LOW -> HIGH or HIGH -> LOW
 void DigitalOutput::toggle() {
-  digitalWrite(pin, active ? LOW : HIGH);
-  active = !active;
+  if(active) {
+    off();
+  } else {
+    on();
+  }
 }
 
 bool DigitalOutput::isActive() {
