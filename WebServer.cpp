@@ -11,13 +11,13 @@ void WebServer::connect(const char *ssid, const char *password) {
   WiFi.begin(ssid, password);
 }
 
-void WebServer::setRoutes(std::map<String, std::tuple<String, int, String (*)()>> routes) {
+void WebServer::setRoutes(std::map<String, std::tuple<String, int, String (*)(String), String>> routes) {
   this->routes = routes;
 }
 
 bool WebServer::start() {
   if (WiFi.isConnected()) {
-    server.on(UriBraces("/{}"), HTTP_GET, [this]() {
+    server.on(UriBraces("/{}"), HTTP_GET, [this]() {      
       handleRequest(server.pathArg(0), "GET");
     });
     server.on(UriBraces("/{}"), HTTP_POST, [this]() {
@@ -81,12 +81,15 @@ void WebServer::handleRequest(String uri, String method) {
   int status;
   String response;
 
+  auto values = it->second;
   // If a value was found in the map and the method matches
-  if (it != routes.end() && method.equalsIgnoreCase(std::get<0>(it->second))) {
+  if (it != routes.end() && method.equalsIgnoreCase(std::get<0>(values))) {
     // Get the status from the value of the map
-    status = std::get<1>(it->second);
-    // Get the function whose return type is String and build the HTML with its result
-    response = buildHTML(std::get<2>(it->second)());
+    status = std::get<1>(values);
+    // Get the function, pass it the parameter and build the HTML with the resulting String
+    String param = std::get<3>(values);
+    String innerHTML = std::get<2>(values)(param);
+    response = buildHTML(innerHTML);
   } else {
     // If no routes found
     status = 404;

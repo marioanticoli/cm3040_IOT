@@ -130,16 +130,16 @@ WebServer block
 */
 
 void initWebServer() {
-  String openHTML = "<!DOCTYPE html><html><head><meta http-equiv=\"refresh\" content=\"2\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body><nav><ul><li><a href=\"/\">Environment readings</a></li><li><a href=\"/light\">Control lights</a></li><li><a href=\"/pump\">Control pump</a></li></ul></nav><h1>Plant Care Dashboard</h1>";
+  String openHTML = "<!DOCTYPE html><html><head><meta http-equiv=\"refresh\" content=\"2\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body><nav><ul><li><a href=\"/\">Environment readings</a></li><li><a href=\"/lights\">Control lights</a></li><li><a href=\"/pump\">Control pump</a></li></ul></nav><h1>Plant Care Dashboard</h1>";
   String closeHTML = "</body></html>";
   ws = new WebServer(openHTML, closeHTML);
   // Create routes
-  std::map<String, std::tuple<String, int, String (*)()>> r = {
-    { "", std::make_tuple("GET", 200, &status) },
-    { "/light", std::make_tuple("GET", 200, &lightsControl) },
-    { "/light", std::make_tuple("POST", 200, &setLights) },
-    { "/pump", std::make_tuple("GET", 200, &pumpControl) },
-    { "/pump", std::make_tuple("POST", 200, &setPump) },
+  std::map<String, std::tuple<String, int, String (*)(String), String>> r = {
+    { "", std::make_tuple("GET", 200, &status, "") },
+    { "/lights", std::make_tuple("GET", 200, &lightsControl, "") },
+    { "/set_lights", std::make_tuple("POST", 200, &setLights, "status") },
+    { "/pump", std::make_tuple("GET", 200, &pumpControl, "") },
+    { "/set_pump", std::make_tuple("POST", 200, &setPump, "status") }
   };
 
   ws->setRoutes(r);
@@ -158,7 +158,7 @@ void initWebServer() {
 }
 
 // Callbacks for handling routes
-String status() {
+String status(String _arg) {
   String pumpStatus = pump->isActive() ? "ON" : "OFF";
   String lightStatus = led->isActive() ? "ON" : "OFF";
   String sensors = "<h2>Environment readings</h2><p>Temperature: " + String(dht->getTemperature()) + "&deg;C</p><p>Humidity: " + String(dht->getHumidity()) + "%</p><p>Luminosity: " + String(photo->get_perc_value()) + "%</p><p>Soil humidity: " + String(soilSensor->get_perc_value()) + "%</p>";
@@ -166,13 +166,12 @@ String status() {
   return sensors + "<hr />" + actuators;
 }
 
-
-String lightsControl() {
-  return setStr(led->isActive(), "/lights", "lights");
+String lightsControl(String _arg) {
+  return setStr(led->isActive(), "/set_lights", "lights");
 }
 
-String pumpControl() {
-  return setStr(pump->isActive(), "/pump", "pump");
+String pumpControl(String _arg) {
+  return setStr(pump->isActive(), "/set_pump", "pump");
 }
 
 String setStr(bool status, String endpoint, String output) {
@@ -180,15 +179,21 @@ String setStr(bool status, String endpoint, String output) {
   return "<form action=\"" + endpoint + "\"><p>Set the status of the " + output + ":</p><input type=\"hidden\" name=\"status\" value=\"" + val + "\"><input type=\"submit\" value=\"Turn " + val + "\"></form>";
 }
 
-String setLights() {
-  // TODO
-  led->toggle();
+String setLights(String arg) {
+  if (arg == "ON") {
+    led->on();
+  } else {
+    led->off();
+  }
   return statusStr(led->isActive(), "Lights");
 }
 
-String setPump() {
-  // TODO
-  pump->toggle();
+String setPump(String arg) {
+  if (arg == "ON") {
+    pump->on();
+  } else {
+    pump->off();
+  }
   return statusStr(pump->isActive(), "Pump");
 }
 
