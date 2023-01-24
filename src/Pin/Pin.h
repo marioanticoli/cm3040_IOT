@@ -1,5 +1,6 @@
 #ifndef Pin_h
 #define Pin_h
+#include <stdint.h>
 
 // Abstract class for pins
 
@@ -9,9 +10,9 @@ protected:
 
 public:
   Pin(uint8_t);
-  virtual void doPinMode(uint8_t mode) ;
-  virtual void doRead();
-  virtual void doWrite(uint8_t val);
+  virtual void doPinMode(uint8_t) = 0;
+  virtual long doRead() = 0;
+  virtual void doWrite(uint8_t) = 0;
 };
 
 #endif

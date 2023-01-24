@@ -1,5 +1,6 @@
 #ifndef NCRelayController_h
 #define NCRelayController_h
+#pragma once
 #include "RelayController.h"
 #include "Pin.h"
 

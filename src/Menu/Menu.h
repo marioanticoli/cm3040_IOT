@@ -1,5 +1,6 @@
 #ifndef Menu_h
 #define Menu_h
+#pragma once
 #include "Arduino.h"
 #include "IRWrapper.h"
 

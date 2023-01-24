@@ -1,4 +1,5 @@
 #include "DigitalOutput.h"
+#include "Arduino.h"
 
 DigitalOutput::DigitalOutput(Pin* pin, bool active)
   : pin(pin), active(active) {
@@ -8,14 +9,14 @@ DigitalOutput::DigitalOutput(Pin* pin, bool active)
 
 void DigitalOutput::on() {
   if (!active) {
-    pin->doDigitalWrite(HIGH);
+    pin->doWrite(HIGH);
     active = true;
   }
 }
 
 void DigitalOutput::off() {
   if (active) {
-    pin->doDigitalWrite(LOW);
+    pin->doWrite(LOW);
     active = false;
   }
 };

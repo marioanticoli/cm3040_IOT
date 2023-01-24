@@ -1,5 +1,6 @@
 #ifndef RelayController_h
 #define RelayController_h
+#pragma once
 #include "Pin.h"
 
 // Abstract class for controlling relays

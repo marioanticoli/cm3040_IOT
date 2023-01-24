@@ -1,15 +1,14 @@
 #include <map>
 #include <tuple>
-#include "Pin.h"
-#include "DigitalPin.h"
-#include "AnalogPin.h"
 #include "WebServer.h"
 #include "WifiCredentials.h"
 #include "Menu.h"
+#include "DigitalPin.h"
+#include "AnalogPin.h"
 #include "DHTWrapper.h"
 #include "LCDWrapper.h"
-#include "AnalogReader.h"
 #include "IRWrapper.h"
+#include "AnalogReader.h"
 #include "NCRelayController.h"
 #include "DigitalOutput.h"
 
@@ -19,13 +18,13 @@
 // D1 SCL
 // D2 SDA
 // D3 FREE
-const Pin* WATER_PUMP_PIN = new DigitalPin(D4);
-const Pin* IR_PIN = new DigitalPin(D5);
-const Pin* DHT_PIN = new DigitalPin(D6);
-const Pin* MUX_PIN = new DigitalPin(D7);  // Using 1 pin instead of the canonical 3 allows me to control two inputs on the multiplexer, remaining PINs are set to 0 (GND)
-const Pin* LED_PIN = new DigitalPin(D8);
-const Pin* SOIL_SENSOR_PIN = new AnalogPin(A0);
-const Pin* PHOTO_PIN = new AnalogPin(A0);
+#define WATER_PUMP_PIN D4
+#define IR_PIN D5
+#define DHT_PIN D6
+#define MUX_PIN D7  // Using 1 pin instead of the canonical 3 allows me to control two inputs on the multiplexer, remaining PINs are set to 0 (GND)
+#define LED_PIN D8
+#define SOIL_SENSOR_PIN A0
+#define PHOTO_PIN A0
 
 #define DRY_VALUE 740
 #define WET_VALUE 288
@@ -63,14 +62,14 @@ void setup() {
   menu = new Menu();
 
   // Initialise sensors, relays and outputs
-  pump = new NCRelayController(WATER_PUMP_PIN);
+  pump = new NCRelayController(new DigitalPin(WATER_PUMP_PIN));
   dht = new DHTWrapper(DHT_PIN);
   lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS);
   ir = new IRWrapper(IR_PIN);
-  soilSensor = new AnalogReader(SOIL_SENSOR_PIN, WET_VALUE, DRY_VALUE);
-  photo = new AnalogReader(PHOTO_PIN, DARK_VALUE, LIGHT_VALUE);
-  mux = new DigitalOutput(MUX_PIN);
-  led = new DigitalOutput(LED_PIN);
+  soilSensor = new AnalogReader(new AnalogPin(SOIL_SENSOR_PIN), WET_VALUE, DRY_VALUE);
+  photo = new AnalogReader(new AnalogPin(PHOTO_PIN), DARK_VALUE, LIGHT_VALUE);
+  mux = new DigitalOutput(new DigitalPin(MUX_PIN));
+  led = new DigitalOutput(new DigitalPin(LED_PIN));
 
   initWebServer();
 
@@ -79,38 +78,38 @@ void setup() {
 }
 
 void loop() {
-  now = millis();
+  // now = millis();
 
-  // Read DHT11
-  dht->update();
-  // Read analog sensor and switch the multiplexer to allow reading the other
-  long soilHum = soilSensor->get_perc_value();
-  mux->toggle();
-  long light = photo->get_perc_value();
-  mux->toggle();
+  // // Read DHT11
+  // dht->update();
+  // // Read analog sensor and switch the multiplexer to allow reading the other
+  // long soilHum = soilSensor->get_perc_value();
+  // mux->toggle();
+  // long light = photo->get_perc_value();
+  // mux->toggle();
 
-  // Listen to incoming requests to the webserver
-  ws->listen();
+  // // Listen to incoming requests to the webserver
+  // ws->listen();
 
-  // Check if IR received a command and pass it to the Menu instance
-  if (uint32_t res = ir->getInput()) {
-    if (res == IRWrapper::key::FUNC_STOP) {
-      toggleShowMenu();
-    }
-    // TODO
-    // menuHandler(menu->getAction(res));
-  }
+  // // Check if IR received a command and pass it to the Menu instance
+  // if (uint32_t res = ir->getInput()) {
+  //   if (res == IRWrapper::key::FUNC_STOP) {
+  //     toggleShowMenu();
+  //   }
+  //   // TODO
+  //   // menuHandler(menu->getAction(res));
+  // }
 
-  // TODO: pass to plantSettings and check if need water and/or light
+  // // TODO: pass to plantSettings and check if need water and/or light
 
-  if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
-    if (showMenu) {
-      lcd->display(0, 0, menu->display());
-    } else {
-      showSensorData(soilHum, light);
-    }
-    lcdLastUpdate = now;
-  }
+  // if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
+  //   if (showMenu) {
+  //     lcd->display(0, 0, menu->display());
+  //   } else {
+  //     showSensorData(soilHum, light);
+  //   }
+  //   lcdLastUpdate = now;
+  // }
 }
 
 void toggleShowMenu() {

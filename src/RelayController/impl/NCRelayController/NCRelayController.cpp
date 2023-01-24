@@ -1,18 +1,19 @@
 #include "NCRelayController.h"
+#include "Arduino.h"
 
 NCRelayController::NCRelayController(Pin* pin)
   : RelayController(pin) {}
 
 void NCRelayController::on() {
   if (!active) {
-    pin->doDigitalWrite(LOW);
+    pin->doWrite(LOW);
     active = true;
   }
 };
 
 void NCRelayController::off() {
   if (active) {
-    pin->doDigitalWrite(HIGH);
+    pin->doWrite(HIGH);
     active = false;
   }
 };

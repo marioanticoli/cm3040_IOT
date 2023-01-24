@@ -1,5 +1,6 @@
 #ifndef DHTWrapper_h
 #define DHTWrapper_h
+#pragma once
 #include <DHT.h>
 
 // Wrapper class for DHT11/22

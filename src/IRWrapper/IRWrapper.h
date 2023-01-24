@@ -1,5 +1,6 @@
 #ifndef IRWrapper_h
 #define IRWrapper_h
+#pragma once
 #include <IRrecv.h>
 
 #define DEFAULT_DEBOUNCE 200

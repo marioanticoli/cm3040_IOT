@@ -1,5 +1,6 @@
 #ifndef DigitalOutput_h
 #define DigitalOutput_h
+#pragma once
 #include "Pin.h"
 
 // Class to manage digital output

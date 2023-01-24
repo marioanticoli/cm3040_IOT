@@ -1,5 +1,6 @@
 #ifndef LCDWrapper_h
 #define LCDWrapper_h
+#pragma once
 #include "Arduino.h"
 #include <LiquidCrystal_I2C.h>
 
