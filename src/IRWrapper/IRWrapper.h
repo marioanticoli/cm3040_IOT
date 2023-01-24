@@ -42,4 +42,5 @@ public:
     REPEAT = 0xFFFFFFFF
   };
 };
+
 #endif

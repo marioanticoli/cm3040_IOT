@@ -17,4 +17,5 @@ public:
   void toggle();
   bool isActive();
 };
+
 #endif

@@ -14,4 +14,5 @@ public:
   // Switch relay off
   void off() override;
 };
+
 #endif

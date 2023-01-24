@@ -21,4 +21,5 @@ public:
   // Switch relay off
   virtual void off() = 0;
 };
+
 #endif

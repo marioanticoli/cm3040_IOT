@@ -16,4 +16,5 @@ public:
   // Return the read from the analog input mapped to the given range
   long get_perc_value();
 };
+
 #endif
