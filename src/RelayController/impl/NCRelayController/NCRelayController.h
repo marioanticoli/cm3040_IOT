@@ -10,6 +10,7 @@ class NCRelayController : public RelayController {
 public:
   // Initialise a relay to pin
   NCRelayController(Pin*);
+  NCRelayController(uint8_t);
   // Switch relay on
   void on() override;
   // Switch relay off

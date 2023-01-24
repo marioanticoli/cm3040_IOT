@@ -1,5 +1,6 @@
 #include "RelayController.h"
 #include "Arduino.h"
+#include "DigitalPin.h"
 
 // Class to control a 3 pin relay in
 

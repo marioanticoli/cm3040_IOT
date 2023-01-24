@@ -1,8 +1,12 @@
 #include "NCRelayController.h"
 #include "Arduino.h"
+#include "DigitalPin.h"
 
 NCRelayController::NCRelayController(Pin* pin)
   : RelayController(pin) {}
+
+NCRelayController::NCRelayController(uint8_t pin)
+  : NCRelayController(new DigitalPin(pin)) {}
 
 void NCRelayController::on() {
   if (!active) {

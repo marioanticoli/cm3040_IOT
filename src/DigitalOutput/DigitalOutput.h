@@ -13,6 +13,7 @@ private:
 public:
   // Initialise a digital output to a pin and a state false = LOW (default), true = HIGH
   DigitalOutput(Pin*, bool = false);
+  DigitalOutput(uint8_t, bool = false);
   void on();
   void off();
   void toggle();

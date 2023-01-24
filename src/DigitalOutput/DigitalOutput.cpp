@@ -1,10 +1,15 @@
 #include "DigitalOutput.h"
 #include "Arduino.h"
+#include "DigitalPin.h"
 
 DigitalOutput::DigitalOutput(Pin* pin, bool active)
   : pin(pin), active(active) {
   pin->doPinMode(OUTPUT);
   toggle();
+};
+
+DigitalOutput::DigitalOutput(uint8_t pin, bool active) {
+  DigitalOutput(new DigitalPin(pin), active);
 };
 
 void DigitalOutput::on() {

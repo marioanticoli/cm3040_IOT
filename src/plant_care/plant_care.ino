@@ -62,14 +62,14 @@ void setup() {
   menu = new Menu();
 
   // Initialise sensors, relays and outputs
-  pump = new NCRelayController(new DigitalPin(WATER_PUMP_PIN));
+  pump = new NCRelayController(WATER_PUMP_PIN);
   dht = new DHTWrapper(DHT_PIN);
   lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS);
   ir = new IRWrapper(IR_PIN);
-  soilSensor = new AnalogReader(new AnalogPin(SOIL_SENSOR_PIN), WET_VALUE, DRY_VALUE);
-  photo = new AnalogReader(new AnalogPin(PHOTO_PIN), DARK_VALUE, LIGHT_VALUE);
-  mux = new DigitalOutput(new DigitalPin(MUX_PIN));
-  led = new DigitalOutput(new DigitalPin(LED_PIN));
+  soilSensor = new AnalogReader(SOIL_SENSOR_PIN, WET_VALUE, DRY_VALUE);
+  photo = new AnalogReader(PHOTO_PIN, DARK_VALUE, LIGHT_VALUE);
+  mux = new DigitalOutput(MUX_PIN);
+  led = new DigitalOutput(LED_PIN);
 
   initWebServer();
 
