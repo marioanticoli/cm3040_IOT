@@ -1,18 +1,18 @@
 #include "NCRelayController.h"
 
-NCRelayController::NCRelayController(uint8_t pin)
+NCRelayController::NCRelayController(Pin* pin)
   : RelayController(pin) {}
 
 void NCRelayController::on() {
   if (!active) {
-    digitalWrite(pin, LOW);
+    pin->doDigitalWrite(LOW);
     active = true;
   }
 };
 
 void NCRelayController::off() {
   if (active) {
-    digitalWrite(pin, HIGH);
+    pin->doDigitalWrite(HIGH);
     active = false;
   }
 };

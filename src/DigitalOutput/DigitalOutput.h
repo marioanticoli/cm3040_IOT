@@ -1,17 +1,17 @@
 #ifndef DigitalOutput_h
 #define DigitalOutput_h
-#include "Arduino.h"
+#include "Pin.h"
 
 // Class to manage digital output
 
 class DigitalOutput {
 private:
-  uint8_t pin;
+  Pin* pin;
   bool active;
 
 public:
   // Initialise a digital output to a pin and a state false = LOW (default), true = HIGH
-  DigitalOutput(uint8_t, bool = false);
+  DigitalOutput(Pin*, bool = false);
   void on();
   void off();
   void toggle();

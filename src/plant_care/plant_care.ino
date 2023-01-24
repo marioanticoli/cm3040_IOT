@@ -1,7 +1,10 @@
-#include "WebServer.h"
-#include "WifiCredentials.h"
 #include <map>
 #include <tuple>
+#include "Pin.h"
+#include "DigitalPin.h"
+#include "AnalogPin.h"
+#include "WebServer.h"
+#include "WifiCredentials.h"
 #include "Menu.h"
 #include "DHTWrapper.h"
 #include "LCDWrapper.h"
@@ -16,13 +19,13 @@
 // D1 SCL
 // D2 SDA
 // D3 FREE
-#define WATER_PUMP_PIN D4
-#define IR_PIN D5
-#define DHT_PIN D6
-#define MUX_PIN D7  // Using 1 pin instead of the canonical 3 allows me to control two inputs on the multiplexer, remaining PINs are set to 0 (GND)
-#define LED_PIN D8
-#define SOIL_SENSOR_PIN A0
-#define PHOTO_PIN A0
+const Pin* WATER_PUMP_PIN = new DigitalPin(D4);
+const Pin* IR_PIN = new DigitalPin(D5);
+const Pin* DHT_PIN = new DigitalPin(D6);
+const Pin* MUX_PIN = new DigitalPin(D7);  // Using 1 pin instead of the canonical 3 allows me to control two inputs on the multiplexer, remaining PINs are set to 0 (GND)
+const Pin* LED_PIN = new DigitalPin(D8);
+const Pin* SOIL_SENSOR_PIN = new AnalogPin(A0);
+const Pin* PHOTO_PIN = new AnalogPin(A0);
 
 #define DRY_VALUE 740
 #define WET_VALUE 288

@@ -1,21 +1,21 @@
 #include "DigitalOutput.h"
 
-DigitalOutput::DigitalOutput(uint8_t pin, bool active)
+DigitalOutput::DigitalOutput(Pin* pin, bool active)
   : pin(pin), active(active) {
-  pinMode(pin, OUTPUT);
+  pin->doPinMode(OUTPUT);
   toggle();
 };
 
 void DigitalOutput::on() {
   if (!active) {
-    digitalWrite(pin, HIGH);
+    pin->doDigitalWrite(HIGH);
     active = true;
   }
 }
 
 void DigitalOutput::off() {
   if (active) {
-    digitalWrite(pin, LOW);
+    pin->doDigitalWrite(LOW);
     active = false;
   }
 };

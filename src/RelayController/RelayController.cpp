@@ -2,10 +2,10 @@
 
 // Class to control a 3 pin relay in
 
-RelayController::RelayController(uint8_t pin)
+RelayController::RelayController(Pin* pin)
   : pin(pin) {
 
-  pinMode(pin, OUTPUT);
+  pin->doPinMode(OUTPUT);
   active = false;
 };
 

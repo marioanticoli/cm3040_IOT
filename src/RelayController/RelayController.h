@@ -1,17 +1,17 @@
 #ifndef RelayController_h
 #define RelayController_h
-#include "Arduino.h"
+#include "Pin.h"
 
 // Abstract class for controlling relays
 
 class RelayController {
 protected:
-  uint8_t pin;
+  Pin* pin;
   bool active;
 
 public:
   // Initialise a relay to pin
-  RelayController(uint8_t);
+  RelayController(Pin*);
   // Toggle relay state
   void toggle();
   // Verify the state of the relay
