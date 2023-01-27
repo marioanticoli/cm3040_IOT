@@ -3,7 +3,7 @@
 #pragma once
 #include <IRrecv.h>
 
-#define DEFAULT_DEBOUNCE 200
+#define DEFAULT_DEBOUNCE 100
 // Wrapper class to IR receiver
 
 class IRWrapper {
