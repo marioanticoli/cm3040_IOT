@@ -1,17 +1,26 @@
+#pragma once
 #ifndef Menu_h
 #define Menu_h
-#pragma once
-#include "Arduino.h"
 #include "IRWrapper.h"
 
 // Menu class
+enum class Action {
+  NEXT,
+  TOGGLE_LCD,
+  TOGGLE_PUMP,
+  TOGGLE_LED,
+  SET_PLANT_PARAMS,
+  NOOP,
+};
 
 class Menu {
 private:
   struct Node {
-    String text;
+    Action selected;
     struct Node* next;
   };
+
+  Node item1, item2, item3;
 
   struct Node* current;
 
@@ -21,17 +30,10 @@ public:
   // Returns text of the current line in the menu
   String display();
   // Returns an action based on the command received
-  uint8_t getAction(IRWrapper::key);
+  Action getAction(IRWrapper::key, bool);
   // Move to next item in menu and returns text to display
   String getNext();
 
-  enum action {
-    LCD_TOGGLE = 1,
-    PUMP_TOGGLE = 2,
-    LED_TOGGLE = 3,
-    SET_PLANT_PARAMS = 4,
-    NOOP = 0
-  };
 };
 
 #endif

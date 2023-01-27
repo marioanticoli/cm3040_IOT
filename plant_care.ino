@@ -1,5 +1,6 @@
 #include <map>
 #include <tuple>
+#include "Arduino.h"
 #include "WebServer.h"
 #include "WifiCredentials.h"
 #include "Menu.h"
@@ -29,7 +30,7 @@
 #define DRY_VALUE 740
 #define WET_VALUE 288
 #define DARK_VALUE 1
-#define LIGHT_VALUE 100
+#define LIGHT_VALUE 1024
 
 #define LCD_PERIOD_MS 1000
 
@@ -49,79 +50,104 @@ DigitalOutput* mux;
 DigitalOutput* led;
 Menu* menu;
 
-// Holds the input from the IR receiver
-// uint32_t command;
-
-// Show menu or sensor data;
+// Input for the IR receiver
+uint32_t command;
+// Switch if to enter settings
+bool fn;
+// Switch if menu or sensor data;
 bool showMenu;
 
 void setup() {
-  // Serial.setDebugOutput(true);
+  Serial.setDebugOutput(true);
   Serial.begin(9600);
 
   menu = new Menu();
 
-  // Initialise sensors, relays and outputs
+  // // Initialise sensors, relays and outputs
+  lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS);
+  lcd->display(0, 0, "Starting...");
   pump = new NCRelayController(WATER_PUMP_PIN);
   dht = new DHTWrapper(DHT_PIN);
-  lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS);
   ir = new IRWrapper(IR_PIN);
-  soilSensor = new AnalogReader(SOIL_SENSOR_PIN, WET_VALUE, DRY_VALUE);
-  photo = new AnalogReader(PHOTO_PIN, DARK_VALUE, LIGHT_VALUE);
+  soilSensor = new AnalogReader(SOIL_SENSOR_PIN, WET_VALUE, DRY_VALUE, true);
+  photo = new AnalogReader(PHOTO_PIN, DARK_VALUE, LIGHT_VALUE, false);
   mux = new DigitalOutput(MUX_PIN);
   led = new DigitalOutput(LED_PIN);
 
   initWebServer();
 
   lcdLastUpdate = millis() / 1000;
+  fn = false;
   showMenu = false;
 }
 
 void loop() {
-  // now = millis();
+  now = millis();
 
-  // // Read DHT11
-  // dht->update();
-  // // Read analog sensor and switch the multiplexer to allow reading the other
-  // long soilHum = soilSensor->get_perc_value();
-  // mux->toggle();
-  // long light = photo->get_perc_value();
-  // mux->toggle();
+  // Read DHT11
+  dht->update();
+  long soilHum, light;
+  // Read analog sensor and switch the multiplexer to allow reading the other sensor
+  soilHum = soilSensor->get_perc_value();
+  mux->toggle();
+  light = photo->get_perc_value();
+  mux->toggle();
 
-  // // Listen to incoming requests to the webserver
-  // ws->listen();
+  // Listen to incoming requests to the webserver
+  ws->listen();
 
-  // // Check if IR received a command and pass it to the Menu instance
-  // if (uint32_t res = ir->getInput()) {
-  //   if (res == IRWrapper::key::FUNC_STOP) {
-  //     toggleShowMenu();
-  //   }
-  //   // TODO
-  //   // menuHandler(menu->getAction(res));
-  // }
+  // Check if IR received a command and pass it to the Menu instance
+  // POWER turns ON/OFF lcd
+  // EQ toggles the menu
+  // FUNC_STOP can be used to duplicate commands
+  command = ir->getInput();
+  if (command && command == IRWrapper::key::POWER) {
+    lcd->toggle();
+  } else if (command && command == IRWrapper::key::EQ) {
+    lcd->clear();
+    showMenu = !showMenu;
+    fn = false;
+    command = 0;
+  } else if (command && showMenu && command == IRWrapper::key::FUNC_STOP) {
+    fn = !fn;
+    command = 0;
+  }
 
-  // // TODO: pass to plantSettings and check if need water and/or light
+  if (command != 0 && showMenu) {
+    menuAction(menu->getAction((IRWrapper::key)command, fn));
+    command = 0;
+  }
 
-  // if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
-  //   if (showMenu) {
-  //     lcd->display(0, 0, menu->display());
-  //   } else {
-  //     showSensorData(soilHum, light);
-  //   }
-  //   lcdLastUpdate = now;
-  // }
+  if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
+    if (showMenu) {
+      lcd->display(0, 0, menu->display());
+      lcd->clear(1);
+    } else {
+      showSensorData(soilHum, light);
+    }
+    lcdLastUpdate = now;
+  }
 }
 
-void toggleShowMenu() {
-  showMenu = !showMenu;
-}
-
-void menuHandler(Menu::action act) {
-  // TODO
+void menuAction(Action action) {
+  switch (action) {
+    case Action::NEXT:
+      menu->getNext();
+      break;
+    case Action::TOGGLE_LCD:
+      lcd->toggle();
+      break;
+    case Action::TOGGLE_LED:
+      led->toggle();
+      break;
+    case Action::TOGGLE_PUMP:
+      pump->toggle();
+      break;
+  }
 }
 
 void showSensorData(long humidity, long light) {
-  lcd->display(0, 0, "Light level: " + String(light) + "%");
+  lcd->display(0, 0, "Light: " + String(light) + "%");
   lcd->display(1, 0, "Soil: " + String(humidity) + "%");
 }
 
