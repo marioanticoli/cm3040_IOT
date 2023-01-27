@@ -5,11 +5,11 @@
 DigitalOutput::DigitalOutput(Pin* pin, bool active)
   : pin(pin), active(active) {
   pin->doPinMode(OUTPUT);
-  toggle();
 };
 
-DigitalOutput::DigitalOutput(uint8_t pin, bool active) {
-  DigitalOutput(new DigitalPin(pin), active);
+DigitalOutput::DigitalOutput(uint8_t pin, bool active) : active(active) {
+  this->pin = new DigitalPin(pin);
+  this->pin->doPinMode(OUTPUT);
 };
 
 void DigitalOutput::on() {
