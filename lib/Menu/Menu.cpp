@@ -27,8 +27,6 @@ Action Menu::getAction(IRWrapper::key key, bool mode) {
 
 String Menu::display() {
   switch(current->selected) {
-    case Action::TOGGLE_LCD:
-      return String("Toggle LCD");
     case Action::TOGGLE_PUMP:
       return String("Toggle water pump");
     case Action::TOGGLE_LED:

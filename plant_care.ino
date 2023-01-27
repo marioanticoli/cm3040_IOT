@@ -134,15 +134,15 @@ void menuAction(Action action) {
     case Action::NEXT:
       menu->getNext();
       break;
-    case Action::TOGGLE_LCD:
-      lcd->toggle();
-      break;
     case Action::TOGGLE_LED:
       led->toggle();
       break;
     case Action::TOGGLE_PUMP:
       pump->toggle();
       break;
+    case Action::SET_PLANT_PARAMS:
+      // TODO
+      break;      
   }
 }
 
