@@ -12,6 +12,7 @@ private:
   uint8_t rows;
   LiquidCrystal_I2C lcd;
   bool on;
+  String lastMsg[2];
 
 public:
   // Initialise an LCD at an address with given rows and columns
@@ -22,6 +23,8 @@ public:
   void toggle();
   // Clear the display
   void clear();
+  // Clear the line
+  void clear(uint8_t);
 };
 
 #endif
