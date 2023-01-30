@@ -3,7 +3,8 @@
 #include "Arduino.h"
 #include "WebServer.h"
 #include "WifiCredentials.h"
-#include "Menu.h"
+#include "PlantSetting.h"
+#include "PlantMenu.h"
 #include "DigitalPin.h"
 #include "AnalogPin.h"
 #include "DHTWrapper.h"
@@ -32,11 +33,15 @@
 #define DARK_VALUE 1
 #define LIGHT_VALUE 1024
 
+#define PLANT_SIZE 3
+
 #define LCD_PERIOD_MS 1000
 
 uint now;
 // LCD last updated time
 uint lcdLastUpdate;
+// Input for the IR receiver
+uint32_t command;
 
 // Declare pointer to objects in global scope
 WebServer* ws;
@@ -48,22 +53,14 @@ IRWrapper* ir;
 NCRelayController* pump;
 DigitalOutput* mux;
 DigitalOutput* led;
-Menu* menu;
+PlantMenu* menu;
 
-// Input for the IR receiver
-uint32_t command;
-// Switch if to enter settings
-bool fn;
-// Switch if menu or sensor data;
-bool showMenu;
 
 void setup() {
   Serial.setDebugOutput(true);
   Serial.begin(9600);
 
-  menu = new Menu();
-
-  // // Initialise sensors, relays and outputs
+  // Initialise sensors, relays and outputs
   lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS);
   lcd->display(0, 0, "Starting...");
   pump = new NCRelayController(WATER_PUMP_PIN);
@@ -73,12 +70,11 @@ void setup() {
   photo = new AnalogReader(PHOTO_PIN, DARK_VALUE, LIGHT_VALUE, false);
   mux = new DigitalOutput(MUX_PIN);
   led = new DigitalOutput(LED_PIN);
+  menu = new PlantMenu(std::vector<PlantSetting>(PLANT_SIZE));
 
   initWebServer();
 
   lcdLastUpdate = millis() / 1000;
-  fn = false;
-  showMenu = false;
 }
 
 void loop() {
@@ -105,51 +101,24 @@ void loop() {
     lcd->toggle();
   } else if (command && command == IRWrapper::key::EQ) {
     lcd->clear();
-    showMenu = !showMenu;
-    fn = false;
-    command = 0;
-  } else if (command && showMenu && command == IRWrapper::key::FUNC_STOP) {
-    fn = !fn;
-    command = 0;
-  }
-
-  if (command != 0 && showMenu) {
-    menuAction(menu->getAction((IRWrapper::key)command, fn));
-    command = 0;
+    menu->toggle();
+  } else if (command && menu->isActive()) {
+    menu->action(command);
   }
 
   if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
-    if (showMenu) {
-      lcd->display(0, 0, menu->display());
-      lcd->clear(1);
+    if (menu->isActive()) {
+      lcd->display(0, 0, menu->line1());
+      lcd->display(1, 0, menu->line2());
     } else {
-      showSensorData(soilHum, light);
+      lcd->display(0, 0, "Light: " + String(light) + "%");
+      lcd->display(1, 0, "Soil: " + String(soilHum) + "%");
     }
     lcdLastUpdate = now;
   }
 }
 
-void menuAction(Action action) {
-  switch (action) {
-    case Action::NEXT:
-      menu->getNext();
-      break;
-    case Action::TOGGLE_LED:
-      led->toggle();
-      break;
-    case Action::TOGGLE_PUMP:
-      pump->toggle();
-      break;
-    case Action::SET_PLANT_PARAMS:
-      // TODO
-      break;      
-  }
-}
 
-void showSensorData(long humidity, long light) {
-  lcd->display(0, 0, "Light: " + String(light) + "%");
-  lcd->display(1, 0, "Soil: " + String(humidity) + "%");
-}
 
 /*
 *******************
