@@ -1,8 +1,8 @@
 #pragma once
 #ifndef Menu_h
 #define Menu_h
-#include "IRWrapper.h"
 #include <vector>
+#include "Arduino.h"
 
 // Menu class
 
@@ -15,9 +15,9 @@ private:
 public:
   // Initialise the menu
   Menu(std::vector<T>);
-  // Returns the value of current item in the menu
-  int getItem();
-  // Move to next item in menu
+  // Returns the current item in the menu
+  T getItem();
+  // Move to the next item in menu
   void next();
 };
 

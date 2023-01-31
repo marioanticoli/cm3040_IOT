@@ -1,13 +1,16 @@
 #include "Menu.h"
 
-Menu::Menu(std::vector<T> menu) : 
+template <class T>
+Menu<T>::Menu(std::vector<T> menu) : 
   menu(menu), current(0) {}
 
-int Menu::getItem() {
+template <class T>
+T Menu<T>::getItem() {
   return menu[current];
 }
 
-void Menu::next() {
-  current = (i + 1) % menu.size();
+template <class T>
+void Menu<T>::next() {
+  current = (current + 1) % menu.size();
 }
 
