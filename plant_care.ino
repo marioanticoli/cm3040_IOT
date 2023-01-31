@@ -3,8 +3,7 @@
 #include "Arduino.h"
 #include "WebServer.h"
 #include "WifiCredentials.h"
-#include "PlantSetting.h"
-#include "PlantMenu.h"
+#include "ControlPlantCare.h"
 #include "DigitalPin.h"
 #include "AnalogPin.h"
 #include "DHTWrapper.h"
@@ -33,8 +32,6 @@
 #define DARK_VALUE 1
 #define LIGHT_VALUE 1024
 
-#define PLANT_SIZE 3
-
 #define LCD_PERIOD_MS 1000
 
 uint now;
@@ -53,7 +50,7 @@ IRWrapper* ir;
 NCRelayController* pump;
 DigitalOutput* mux;
 DigitalOutput* led;
-PlantMenu* menu;
+ControlPlantCare* control;
 
 
 void setup() {
@@ -70,7 +67,7 @@ void setup() {
   photo = new AnalogReader(PHOTO_PIN, DARK_VALUE, LIGHT_VALUE, false);
   mux = new DigitalOutput(MUX_PIN);
   led = new DigitalOutput(LED_PIN);
-  menu = new PlantMenu(std::vector<PlantSetting>(PLANT_SIZE));
+  control = new ControlPlantCare(led, pump);
 
   initWebServer();
 
@@ -92,7 +89,7 @@ void loop() {
   // Listen to incoming requests to the webserver
   ws->listen();
 
-  // Check if IR received a command and pass it to the Menu instance
+  // Check if IR received a command and pass it to the ControlPlantCare instance
   // POWER turns ON/OFF lcd
   // EQ toggles the menu
   // FUNC_STOP can be used to duplicate commands
@@ -101,15 +98,16 @@ void loop() {
     lcd->toggle();
   } else if (command && command == IRWrapper::key::EQ) {
     lcd->clear();
-    menu->toggle();
-  } else if (command && menu->isActive()) {
-    menu->action(command);
+    control->toggle();
+  } else if (command && control->isActive()) {
+    control->action(command);
   }
 
   if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
-    if (menu->isActive()) {
-      lcd->display(0, 0, menu->line1());
-      lcd->display(1, 0, menu->line2());
+    if (control->isActive()) {
+      auto l = control->getLines();
+      lcd->display(0, 0, l[0]);
+      lcd->display(1, 0, l[1]);
     } else {
       lcd->display(0, 0, "Light: " + String(light) + "%");
       lcd->display(1, 0, "Soil: " + String(soilHum) + "%");
