@@ -11,7 +11,7 @@
 class WebServer {
 private:
   // Map of tuple containing method, status code, pointer to function
-  std::map<String, std::tuple<String, int, String (*)(String), String>> routes;
+  std::map<String, std::tuple<String, int, String (*)(String*, uint8_t), String*, uint8_t>> routes;
   ESP8266WebServer server;
   String openHTML;
   String closeHTML;
@@ -35,7 +35,7 @@ public:
   // Accepts incoming requests
   void listen();
   // Set user-defined routes
-  void setRoutes(std::map<String, std::tuple<String, int, String (*)(String), String>>);
+  void setRoutes(std::map<String, std::tuple<String, int, String (*)(String*, uint8_t), String*, uint8_t>>);
 };
 
 #endif

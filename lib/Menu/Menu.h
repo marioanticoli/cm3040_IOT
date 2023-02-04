@@ -1,39 +1,38 @@
 #pragma once
 #ifndef Menu_h
 #define Menu_h
-#include "IRWrapper.h"
 
 // Menu class
-enum class Action {
-  NEXT,
-  TOGGLE_LCD,
-  TOGGLE_PUMP,
-  TOGGLE_LED,
-  SET_PLANT_PARAMS,
-  NOOP,
-};
 
+template <typename T>
 class Menu {
 private:
-  struct Node {
-    Action selected;
-    struct Node* next;
-  };
-
-  Node item1, item2, item3;
-
-  struct Node* current;
+  T* menu;
+  uint8_t size;
+  uint8_t current;
 
 public:
-  // Initialise the menu
-  Menu();
-  // Returns text of the current line in the menu
-  String display();
-  // Returns an action based on the command received
-  Action getAction(IRWrapper::key, bool);
-  // Move to next item in menu and returns text to display
-  String getNext();
+  // Initialise the Menu
+  // implementation in the header file to make it visible to calling classes
+  Menu(T menu[], uint8_t size) : 
+    size(size), current(0) {
+    this->menu = new T[size];
+    for (uint8_t i = 0; i < size; i++) this->menu[i] = menu[i];
+  }
 
+  // Returns the current item in the menu
+  T getItem() {
+    return menu[current];
+  }
+
+  // Move to the next item in menu
+  void next() {
+    current = (current + 1) % size;
+  }
+
+  void reset() {
+    current = 0;
+  }
 };
 
 #endif
