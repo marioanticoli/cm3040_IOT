@@ -124,6 +124,7 @@ void loop() {
     delay(100);
     pump->off();
     pumpLastUpdate = now;
+    Serial.println(getFragmentation());
   }
 
   if (light < setting[currPlantSetting].getLuminosity() && !bypassLED) {
@@ -155,13 +156,13 @@ void loop() {
 
   // update every LCD_PERIOD_MS ms, not blocking unlike delay()
   if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
-    if (menuActive) {
-      lcd->display(0, 0, line[0]);
-      lcd->display(1, 0, line[1]);
-    } else {
-      lcd->display(0, 0, "Light: " + String(light) + "%");
-      lcd->display(1, 0, "Soil: " + String(soilHum) + "%");
+    if (!menuActive) {
+      line[0] = "Light: " + String(light) + "%";
+      line[1] = "Soil: " + String(soilHum) + "%";
     }
+
+    lcd->display(0, 0, line[0]);
+    lcd->display(1, 0, line[1]);
     lcdLastUpdate = now;
   }
 }
@@ -195,7 +196,6 @@ void initWebServer() {
 
   ws->connect(SSID, PASSWORD);
   while (ws->getStatus() != "Connected") {
-    Serial.println(ws->getStatus());
     delay(500);
   }
   Serial.println(ws->getStatus() + " with IP " + ws->getIPAddress().toString().c_str());
@@ -366,4 +366,16 @@ void menuAction(uint32_t command) {
       break;
   }
   setMenuDisplay();
+}
+
+size_t getTotalAvailableMemory() {
+  return ESP.getFreeHeap();
+}
+
+size_t getLargestAvailableBlock() {
+  return ESP.getMaxFreeBlockSize();
+}
+
+float getFragmentation() {
+  return 100 - getLargestAvailableBlock() * 100.0 / getTotalAvailableMemory();
 }
