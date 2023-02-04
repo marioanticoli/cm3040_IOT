@@ -1,24 +1,35 @@
 #pragma once
 #ifndef Menu_h
 #define Menu_h
-#include <vector>
 #include "Arduino.h"
 
 // Menu class
 
-template <class T>
+template <typename T>
 class Menu {
 private:
-  std::vector<T> menu;
+  T* menu;
+  uint8_t size;
   uint8_t current;
 
 public:
-  // Initialise the menu
-  Menu(std::vector<T>);
+  // Initialise the Menu
+  // implementation in the header file to make it visible to calling classes
+  Menu(T menu[], uint8_t size) : 
+    size(size), current(0) {
+    this->menu = new T[size];
+    for (uint8_t i = 0; i < size; i++) this->menu[i] = menu[i];
+  }
+
   // Returns the current item in the menu
-  T getItem();
+  T getItem() {
+    return menu[current];
+  }
+
   // Move to the next item in menu
-  void next();
+  void next() {
+    current = (current + 1) % size;
+  }
 };
 
 #endif
