@@ -6,8 +6,9 @@
 
 class PlantSetting {
 private:
-  uint8_t luminosity;
-  uint8_t humidity;
+  uint8_t luminosity = 50;
+  uint8_t humidity = 50;
+  bool checkLimits(uint8_t, int8_t);
 
 public:
   // Get the luminosity

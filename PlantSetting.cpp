@@ -5,7 +5,7 @@ uint8_t PlantSetting::getLuminosity() {
 }
 
 void PlantSetting::incLuminosity(int8_t val) {
-  if(luminosity + val <= 100 && luminosity + val >= 0) {
+  if (checkLimits(luminosity, val)) {
     luminosity += val;
   }
 }
@@ -15,8 +15,12 @@ uint8_t PlantSetting::getHumidity() {
 }
 
 void PlantSetting::incHumidity(int8_t val) {
-  if(humidity + val <= 100 && humidity + val >= 0) {
+  if (checkLimits(humidity, val)) {
     humidity += val;
   }
 }
 
+bool PlantSetting::checkLimits(uint8_t original, int8_t inc) {
+  // returns true if between 0 and 100 percent included
+  return ((original + inc) <= 100) && ((original + inc) >= 0);
+}
