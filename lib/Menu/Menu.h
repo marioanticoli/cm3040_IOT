@@ -30,6 +30,10 @@ public:
   void next() {
     current = (current + 1) % size;
   }
+
+  void reset() {
+    current = 0;
+  }
 };
 
 #endif
