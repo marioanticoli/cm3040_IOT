@@ -14,10 +14,14 @@ public:
   // Get the luminosity
   uint8_t getLuminosity();
   // Set the luminosity
+  void setLuminosity(uint8_t);
+  // Increase the luminosity
   void incLuminosity(int8_t);
   // Get the humidity
   uint8_t getHumidity();
   // Set the humidity
+  void setHumidity(uint8_t);
+  // Increase the humidity
   void incHumidity(int8_t);
 };
 
