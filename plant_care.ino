@@ -1,5 +1,6 @@
 #include <map>
 #include <tuple>
+#include <string>
 #include "Arduino.h"
 #include "WebServer.h"
 #include "WifiCredentials.h"
@@ -71,7 +72,7 @@ Menu<Action>* currMenu;
 
 PlantSetting setting[PLANT_SIZE];
 bool menuActive;
-String line[2];
+std::string line[2];
 uint currPlantSetting;
 bool bypassLED, bypassPump;
 
@@ -81,7 +82,7 @@ void setup() {
 
   // Initialise sensors, relays and outputs
   lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS);
-  lcd->display(0, 0, "Starting...");
+  lcd->display(0, 0, (std::string *)"Starting...");
   pump = new NCRelayController(WATER_PUMP_PIN);
   dht = new DHTWrapper(DHT_PIN);
   ir = new IRWrapper(IR_PIN);
@@ -103,6 +104,19 @@ void setup() {
   lcdLastUpdate = millis() / 1000;
   pumpLastUpdate = lcdLastUpdate;
 }
+
+size_t getTotalAvailableMemory() {
+  return ESP.getFreeHeap();
+}
+
+size_t getLargestAvailableBlock() {
+  return ESP.getMaxFreeBlockSize();
+}
+
+float getFragmentation() {
+  return 100 - getLargestAvailableBlock() * 100.0 / getTotalAvailableMemory();
+}
+
 
 void loop() {
   now = millis();
@@ -155,13 +169,13 @@ void loop() {
 
   // update every LCD_PERIOD_MS ms, not blocking unlike delay()
   if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
-    if (menuActive) {
-      lcd->display(0, 0, line[0]);
-      lcd->display(1, 0, line[1]);
-    } else {
-      lcd->display(0, 0, "Light: " + String(light) + "%");
-      lcd->display(1, 0, "Soil: " + String(soilHum) + "%");
+    if (!menuActive) {
+      line[0] = "Light: " + std::to_string(light) + "%";
+      line[1] = "Soil: " + std::to_string(soilHum) + "%";
     }
+    lcd->display(0, 0, &line[0]);
+    lcd->display(1, 0, &line[1]);
+
     lcdLastUpdate = now;
   }
 }
@@ -175,14 +189,14 @@ WebServer block
 */
 
 void initWebServer() {
-  String openHTML = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body><nav><ul><li><a href=\"/\">Environment readings</a></li><li><a href=\"/lights\">Control lights</a></li><li><a href=\"/pump\">Control pump</a></li></ul></nav><h1>Plant Care Dashboard</h1>";
-  String closeHTML = "</body></html>";
+  std::string openHTML = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body><nav><ul><li><a href=\"/\">Environment readings</a></li><li><a href=\"/lights\">Control lights</a></li><li><a href=\"/pump\">Control pump</a></li></ul></nav><h1>Plant Care Dashboard</h1>";
+  std::string closeHTML = "</body></html>";
   ws = new WebServer(openHTML, closeHTML);
   // Create routes
-  String params[1] = { "Status" };
-  String params_plant[3] = { "plant", "humidity", "luminosity" };
+  std::string params[1] = { "Status" };
+  std::string params_plant[3] = { "plant", "humidity", "luminosity" };
   // map<endpoint, tuple<method, status, callback, params, params_size>>
-  std::map<String, std::tuple<String, int, String (*)(String*, uint8_t), String*, uint8_t>> r = {
+  std::map<std::string, std::tuple<std::string, int, std::string (*)(std::string*, uint8_t), std::string*, uint8_t>> r = {
     { "", std::make_tuple("GET", 200, &status, params, 0) },
     { "lights", std::make_tuple("GET", 200, &lightsControl, params, 0) },
     { "pump", std::make_tuple("GET", 200, &pumpControl, params, 0) },
@@ -195,10 +209,11 @@ void initWebServer() {
 
   ws->connect(SSID, PASSWORD);
   while (ws->getStatus() != "Connected") {
-    Serial.println(ws->getStatus());
+    Serial.println(ws->getStatus().c_str());
     delay(500);
   }
-  Serial.println(ws->getStatus() + " with IP " + ws->getIPAddress().toString().c_str());
+  Serial.print(ws->getStatus().c_str());
+  Serial.println(ws->getIPAddress().toString().c_str());
   if (ws->start()) {
     Serial.println("Started webserver");
   } else {
@@ -207,24 +222,25 @@ void initWebServer() {
 }
 
 // Callbacks for handling routes
-String status(String* _arg, uint8_t _size) {
-  String pumpStatus = pump->isActive() ? "ON" : "OFF";
-  String lightStatus = led->isActive() ? "ON" : "OFF";
-  String sensors = "<h2>Environment readings</h2><p>Temperature: " + String(dht->getTemperature()) + "&deg;C</p><p>Humidity: " + String(dht->getHumidity()) + "%</p><p>Luminosity: " + String(photo->get_perc_value()) + "%</p><p>Soil humidity: " + String(soilSensor->get_perc_value()) + "%</p>";
-  String actuators = "<h2>Actuators status</h2><p>Water pump: " + pumpStatus + "</p>" + "<p>Light: " + lightStatus + "</p>";
-  String settings = "<h2>Plant settings</h2><p>Selected plant: " + String(currPlantSetting + 1) + "</p>";
+std::string status(std::string* _arg, uint8_t _size) {
+  std::string pumpStatus = pump->isActive() ? "ON" : "OFF";
+  std::string ledStatus = led->isActive() ? "ON" : "OFF";
+  std::string sensors = "<h2>Environment readings</h2><p>Temperature: " + std::to_string(dht->getTemperature()) + "&deg;C</p><p>Humidity: " + std::to_string(dht->getHumidity()) + "%</p><p>Luminosity: " + std::to_string(photo->get_perc_value()) + "%</p><p>Soil humidity: " + std::to_string(soilSensor->get_perc_value()) + "%</p>";
+  std::string actuators = "<h2>Actuators status</h2><p>Water pump: " + pumpStatus + "</p>" + "<p>Light: " + ledStatus + "</p>";
+  std::string settings = "<h2>Plant settings</h2><p>Selected plant: " + std::to_string(currPlantSetting + 1) + "</p>";
 
   return sensors + "<hr />" + actuators + "<hr />" + settings;
 }
 
-String setStr(bool status, String endpoint, String output) {
-  String val = status ? "OFF" : "ON";
+std::string setStr(bool status, std::string endpoint, std::string output) {
+  std::string val = status ? "OFF" : "ON";
   return "<form action=\"" + endpoint + "\" method=\"POST\"><p>Set the status of the " + output + ":</p><input type=\"hidden\" name=\"status\" value=\"" + val + "\"><input type=\"submit\" value=\"Turn " + val + "\"></form>";
 }
 
-String setLights(String* arg, uint8_t size) {
+std::string setLights(std::string* arg, uint8_t size) {
   if (size > 0) {
     bypassLED = true;
+    Serial.println(arg[0].c_str());
     if (arg[0] == "ON") {
       led->on();
     } else {
@@ -234,7 +250,7 @@ String setLights(String* arg, uint8_t size) {
   return statusStr(led->isActive(), "Lights");
 }
 
-String setPump(String* arg, uint8_t size) {
+std::string setPump(std::string* arg, uint8_t size) {
   if (size > 0) {
     bypassPump = true;
     if (arg[0] == "ON") {
@@ -246,28 +262,27 @@ String setPump(String* arg, uint8_t size) {
   return statusStr(pump->isActive(), "Pump");
 }
 
-String statusStr(bool status, String output) {
-  return String(output + " is now " + status ? "ON" : "OFF");
+std::string statusStr(bool status, std::string output) {
+  return output + " is now " + (status ? "ON" : "OFF");
 }
 
-String lightsControl(String* _arg, uint8_t _size) {
+std::string lightsControl(std::string* _arg, uint8_t _size) {
   return setStr(led->isActive(), "/set_lights", "lights");
 }
 
-String pumpControl(String* _arg, uint8_t _size) {
+std::string pumpControl(std::string* _arg, uint8_t _size) {
   return setStr(pump->isActive(), "/set_pump", "pump");
 }
 
-String setPlant(String* arg, uint8_t size) {
-  Serial.println(arg[0] + " " + arg[1] + " " + arg[2]);
+std::string setPlant(std::string* arg, uint8_t size) {
   // if(size == 3) {
-  //   uint8_t ind = String(arg[0]).toInt();
-  //   uint8_t h = String(arg[1]).toInt();
-  //   uint8_t l = String(arg[2]).toInt();
+  //   uint8_t ind = std::string(arg[0]).toInt();
+  //   uint8_t h = std::string(arg[1]).toInt();
+  //   uint8_t l = std::string(arg[2]).toInt();
   //   setting[ind].setHumidity(h);
   //   setting[ind].setLuminosity(l);
   // }
-  return String("");
+  return "";
 }
 
 /*
@@ -287,28 +302,28 @@ void toggleMenu() {
 void setMenuDisplay() {
   switch (currMenu->getItem()) {
     case Action::TOGGLE_LED:
-      line[0] = String("Toggle LED");
-      line[1] = String(led->isActive() ? "ON -> OFF" : "OFF -> ON");
+      line[0] = "Toggle LED";
+      line[1] = led->isActive() ? "ON -> OFF" : "OFF -> ON";
       break;
     case Action::TOGGLE_PUMP:
-      line[0] = String("Toggle pump");
-      line[1] = String(pump->isActive() ? "ON -> OFF" : "OFF -> ON");
+      line[0] = "Toggle pump";
+      line[1] = pump->isActive() ? "ON -> OFF" : "OFF -> ON";
       break;
     case Action::SET_PLANT:
-      line[0] = String("Set plant");
-      line[1] = String("'PLAY' + [1-3]");
+      line[0] = "Set plant";
+      line[1] = "'PLAY' + [1-3]";
       break;
     case Action::SET_HUMIDITY:
-      line[0] = String("Plant ") + String(currPlantSetting + 1);
-      line[1] = String("Hum. ") + String(setting[currPlantSetting].getHumidity()) + String("%");
+      line[0] = "Plant " + std::to_string(currPlantSetting + 1);
+      line[1] = "Hum. " + std::to_string(setting[currPlantSetting].getHumidity()) + "%";
       break;
     case Action::SET_LUMINOSITY:
-      line[0] = String("Plant ") + String(currPlantSetting + 1);
-      line[1] = String("Light ") + String(setting[currPlantSetting].getLuminosity()) + String("%");
+      line[0] = "Plant " + std::to_string(currPlantSetting + 1);
+      line[1] = "Light " + std::to_string(setting[currPlantSetting].getLuminosity()) + "%";
       break;
     case Action::BACK:
-      line[0] = String("Go to main menu");
-      line[1] = String("");
+      line[0] = "Go to main menu";
+      line[1] = "";
       break;
   }
 }

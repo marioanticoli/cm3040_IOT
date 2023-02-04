@@ -2,6 +2,7 @@
 #define DHTWrapper_h
 #pragma once
 #include <DHT.h>
+#include <string>
 
 // Wrapper class for DHT11/22
 
@@ -21,7 +22,7 @@ public:
   // Returns the humidity
   float getHumidity();
   // Returns a formatted string with temperature and humidity
-  String toString();
+  std::string toString();
 };
 
 #endif

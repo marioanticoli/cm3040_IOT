@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "LCDWrapper.h"
 
-const String EMPTY_LINE = "                "; // 16 character long, to clear a line
+const std::string EMPTY_LINE = "                "; // 16 character long, to clear a line
 
 LCDWrapper::LCDWrapper(uint8_t address, uint8_t cols, uint8_t rows)
   : lcd(LiquidCrystal_I2C(address, cols, rows)), cols(cols), rows(rows) {
@@ -9,13 +9,13 @@ LCDWrapper::LCDWrapper(uint8_t address, uint8_t cols, uint8_t rows)
   toggle();
 }
 
-bool LCDWrapper::display(uint8_t line, uint8_t column, String msg) {
+bool LCDWrapper::display(uint8_t line, uint8_t column, const std::string *msg) {
   // Display if position within the limits of the LCD
   if (line < rows && column < cols) {
-    if(!msg.equals(lastMsg[line])) {
+    if(msg->compare(lastMsg[line]) != 0) {
       lcd.setCursor(0, line);
-      lcd.print(EMPTY_LINE);
-      lastMsg[line] = msg;
+      lcd.print(EMPTY_LINE.c_str());
+      &lastMsg[line] = msg;
     }
     lcd.setCursor(column, line);
     lcd.print(msg);
