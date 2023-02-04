@@ -11,7 +11,7 @@ void WebServer::connect(const char *ssid, const char *password) {
   WiFi.begin(ssid, password);
 }
 
-void WebServer::setRoutes(std::map<String, std::tuple<String, int, String (*)(String), String>> routes) {
+void WebServer::setRoutes(std::map<String, std::tuple<String, int, String (*)(String*, uint8_t), String*, uint8_t>> routes) {
   this->routes = routes;
 }
 
@@ -82,13 +82,15 @@ void WebServer::handleRequest(String uri, String method) {
   String response;
 
   auto values = it->second;
+  Serial.println(std::get<0>(values));
   // If a value was found in the map and the method matches
   if (it != routes.end() && method.equalsIgnoreCase(std::get<0>(values))) {
     // Get the status from the value of the map
     status = std::get<1>(values);
-    // Get the function, pass it the parameter and build the HTML with the resulting String
-    String param = std::get<3>(values);
-    String innerHTML = std::get<2>(values)(param);
+    // Get the function, pass it the parameters and their size to build the HTML with the resulting String
+    auto params = std::get<3>(values);
+    uint8_t size = std::get<4>(values);
+    String innerHTML = std::get<2>(values)(params, size);
     response = buildHTML(innerHTML);
   } else {
     // If no routes found
