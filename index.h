@@ -20,15 +20,17 @@ const char INDEX_page[] PROGMEM = R"=====(
     <p>Light:&nbsp;<span id="light"></span>&nbsp;<button type="button" id="toggleLED">Toggle</button></p>
     <hr />
 
-    <h2>Plant settings</h2>
+    <h2>Current settings</h2>
     <div>
       <select id="plant">
         <option value="0">Setting 1</option>
         <option value="1">Setting 2</option>
         <option value="2">Setting 3</option>
       </select>
-      <input type="number" id="plantHum" value="" step="5" min="0" max="100">
-      <input type="number" id="plantLight" value="" step="5" min="0" max="100">
+      <label for="humidity">Humidity</label>
+      <input type="number" name="humidity" id="plantHum" value="" step="5" min="0" max="100">
+      <label for="luminosity">Light</label>
+      <input type="number" name="luminosity" id="plantLight" value="" step="5" min="0" max="100">
       <button type="button" id="update-plant">Update</button>      
     </div>    
 
