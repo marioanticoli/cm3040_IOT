@@ -14,6 +14,7 @@
 #include "Menu.h"
 #include "PlantSetting.h"
 #include "index.h"
+#include <ArduinoJson.h>
 
 #define DISPLAY_COLS 16
 #define DISPLAY_ROWS 2
@@ -197,6 +198,7 @@ void initWebServer() {
     { "current-setting", std::make_tuple("GET", 200, &getCurrentSetting, "text/json") },
     { "toggle-pump", std::make_tuple("POST", 200, &togglePumpStatus, "text/plain") },
     { "toggle-led", std::make_tuple("POST", 200, &toggleLEDStatus, "text/plain") },
+    { "update-plant", std::make_tuple("POST", 200, &updatePlant, "text/plain")}    
   };
 
   ws->setRoutes(r);
@@ -215,52 +217,52 @@ void initWebServer() {
 
 // Callbacks for handling routes
 
-String status(String arg) {
+String status(String args) {
   return INDEX_page;
 }
 
-String getTemperature(String arg) {
+String getTemperature(String args) {
   return String(dht->getTemperature());
 }
 
-String getHumidity(String arg) {
+String getHumidity(String args) {
   return String(dht->getHumidity());
 }
 
-String getLuminosity(String arg) {
+String getLuminosity(String args) {
   return String(light);
 }
 
-String getSoilHum(String arg) {
+String getSoilHum(String args) {
   return String(soilHum);
 }
 
-String getPumpStatus(String arg) {
+String getPumpStatus(String args) {
   return String(pump->isActive() ? "ON" : "OFF");
 }
 
-String getLEDStatus(String arg) {
+String getLEDStatus(String args) {
   return String(led->isActive() ? "ON" : "OFF");
 }
 
-String getCurrentSetting(String arg) {
+String getCurrentSetting(String args) {
   return "{\"i\": " + String(currPlantSetting) + ",\"h\": " + String(setting[currPlantSetting].getHumidity()) + ",\"l\": " + String(setting[currPlantSetting].getLuminosity()) + "}";
 }
 
-String togglePumpStatus(String arg) {
+String togglePumpStatus(String args) {
   bypassPump = true;
   pump->toggle();
-  return getPumpStatus();
+  return getPumpStatus(args);
 }
 
-String toggleLEDStatus(String arg) {
+String toggleLEDStatus(String args) {
   bypassLED = true;
   led->toggle();
-  return getLEDStatus();
+  return getLEDStatus(args);
 }
 
-String setCurrentPlant(String arg) {
-
+String updatePlant(String args) {
+  return args;
 }
 
 /*

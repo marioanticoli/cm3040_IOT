@@ -29,6 +29,7 @@ const char INDEX_page[] PROGMEM = R"=====(
       </select>
       <input type="number" id="plantHum" value="" step="5" min="0" max="100">
       <input type="number" id="plantLight" value="" step="5" min="0" max="100">
+      <button type="button" id="update-plant">Update</button>      
     </div>    
 
     <script>
@@ -69,16 +70,18 @@ const char INDEX_page[] PROGMEM = R"=====(
         toggleActuator("/toggle-led");
       });
 
-      document.getElementById("plant").addEventListener("change", (e) => {
-        console.log(e);
-      });
+      document.getElementById("update-plant").addEventListener("click", (e) => {
+        data = {
+          i: document.getElementById("plant").value,
+          h: document.getElementById("plantHum").value,
+          l: document.getElementById("plantLight").value,                    
+        };
 
-      document.getElementById("plantHum").addEventListener("change", (e) => {
-        console.log(e);        
-      });
-      
-      document.getElementById("plantLight").addEventListener("change", (e) => {
-        console.log(e);
+        fetch("update-plant", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(data)
+        });
       });
 
     </script>
