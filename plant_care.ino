@@ -13,6 +13,7 @@
 #include "DigitalOutput.h"
 #include "Menu.h"
 #include "PlantSetting.h"
+#include "index.h"
 
 #define DISPLAY_COLS 16
 #define DISPLAY_ROWS 2
@@ -35,6 +36,7 @@
 
 #define LCD_PERIOD_MS 500
 #define PUMP_PERIOD_MS 10000
+#define ANALOG_SENSOR_PERIOD_MS 2500
 
 #define PLANT_SIZE 3
 
@@ -48,10 +50,7 @@ enum class Action {
 };
 
 uint now;
-// LCD last updated time
-uint lcdLastUpdate;
-// Pump last updated time
-uint pumpLastUpdate;
+
 // Input for the IR receiver
 uint32_t command;
 
@@ -75,9 +74,13 @@ String line[2];
 uint currPlantSetting;
 bool bypassLED, bypassPump;
 
+long soilHum, light;
+
 void setup() {
   Serial.setDebugOutput(true);
   Serial.begin(9600);
+
+  initWebServer();
 
   // Initialise sensors, relays and outputs
   lcd = new LCDWrapper(I2C_ADDRESS, DISPLAY_COLS, DISPLAY_ROWS);
@@ -98,43 +101,46 @@ void setup() {
   currMenu = mainMenu;
   menuActive = false;
 
-  initWebServer();
-
-  lcdLastUpdate = millis() / 1000;
-  pumpLastUpdate = lcdLastUpdate;
+  soilHum = soilSensor->get_perc_value();
+  mux->toggle();
+  light = photo->get_perc_value();  
+  mux->toggle();
 }
 
 void loop() {
+  // Listen to incoming requests to the webserver
+  ws->listen();
+
   now = millis();
 
   // Read DHT11
   dht->update();
-  long soilHum, light;
-  // Read analog sensor and switch the multiplexer to allow reading the other sensor
-  soilHum = soilSensor->get_perc_value();
-  mux->toggle();
-  light = photo->get_perc_value();
-  mux->toggle();
+
+  // Read one analog sensor every ANALOG_SENSOR_PERIOD_MS
+  if(now % (ANALOG_SENSOR_PERIOD_MS * 2) == 0) {
+    soilHum = soilSensor->get_perc_value();
+    mux->toggle();
+  } else if (now % ANALOG_SENSOR_PERIOD_MS == 0) {
+    light = photo->get_perc_value();  
+    mux->toggle();
+  }
 
   // Check if values for humidity and light reach current target
   // better to pour water slowly
-  if (now - pumpLastUpdate >= PUMP_PERIOD_MS && soilHum < setting[currPlantSetting].getHumidity() && !bypassPump) {
-    // turn on for 100ms not to flood the soil
+  if (now % PUMP_PERIOD_MS == 0 && soilHum < setting[currPlantSetting].getHumidity() && !bypassPump) {
+    // turn on for 50ms not to flood the soil
     pump->on();
-    delay(100);
+    delay(50);
     pump->off();
-    pumpLastUpdate = now;
-    Serial.println(getFragmentation());
   }
 
-  if (light < setting[currPlantSetting].getLuminosity() && !bypassLED) {
-    led->on();
-  } else {
-    led->off();
+  if(!bypassLED) {
+    if (light < setting[currPlantSetting].getLuminosity()) {
+      led->on();
+    } else {
+      led->off();
+    }    
   }
-
-  // Listen to incoming requests to the webserver
-  ws->listen();
 
   // Check if IR received a command and react if valid
   // POWER turns ON/OFF lcd
@@ -155,7 +161,7 @@ void loop() {
   command = 0;
 
   // update every LCD_PERIOD_MS ms, not blocking unlike delay()
-  if (now - lcdLastUpdate >= LCD_PERIOD_MS) {
+  if (now % LCD_PERIOD_MS == 0) {
     if (!menuActive) {
       line[0] = "Light: " + String(light) + "%";
       line[1] = "Soil: " + String(soilHum) + "%";
@@ -163,7 +169,6 @@ void loop() {
 
     lcd->display(0, 0, line[0]);
     lcd->display(1, 0, line[1]);
-    lcdLastUpdate = now;
   }
 }
 
@@ -176,20 +181,22 @@ WebServer block
 */
 
 void initWebServer() {
-  String openHTML = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"></head><body><nav><ul><li><a href=\"/\">Environment readings</a></li><li><a href=\"/lights\">Control lights</a></li><li><a href=\"/pump\">Control pump</a></li></ul></nav><h1>Plant Care Dashboard</h1>";
-  String closeHTML = "</body></html>";
-  ws = new WebServer(openHTML, closeHTML);
+  ws = new WebServer();
   // Create routes
   String params[1] = { "Status" };
   String params_plant[3] = { "plant", "humidity", "luminosity" };
-  // map<endpoint, tuple<method, status, callback, params, params_size>>
-  std::map<String, std::tuple<String, int, String (*)(String*, uint8_t), String*, uint8_t>> r = {
-    { "", std::make_tuple("GET", 200, &status, params, 0) },
-    { "lights", std::make_tuple("GET", 200, &lightsControl, params, 0) },
-    { "pump", std::make_tuple("GET", 200, &pumpControl, params, 0) },
-    { "set_lights", std::make_tuple("POST", 200, &setLights, params, 1) },
-    { "set_pump", std::make_tuple("POST", 200, &setPump, params, 1) },
-    // { "set_plant", std::make_tuple("POST", 200, &setPlant, params_plant, 3) },
+  // map<endpoint, tuple<method, status, callback, response_type>>
+  std::map<String, std::tuple<String, int, String (*)(String), String>> r = {
+    { "", std::make_tuple("GET", 200, &status, "text/html") },
+    { "temperature", std::make_tuple("GET", 200, &getTemperature, "text/plain") },
+    { "humidity", std::make_tuple("GET", 200, &getHumidity, "text/plain") },
+    { "luminosity", std::make_tuple("GET", 200, &getLuminosity, "text/plain") },
+    { "soil", std::make_tuple("GET", 200, &getSoilHum, "text/plain") },
+    { "pump-status", std::make_tuple("GET", 200, &getPumpStatus, "text/plain") },
+    { "light-status", std::make_tuple("GET", 200, &getLEDStatus, "text/plain") },
+    { "current-setting", std::make_tuple("GET", 200, &getCurrentSetting, "text/json") },
+    { "toggle-pump", std::make_tuple("POST", 200, &togglePumpStatus, "text/plain") },
+    { "toggle-led", std::make_tuple("POST", 200, &toggleLEDStatus, "text/plain") },
   };
 
   ws->setRoutes(r);
@@ -207,67 +214,53 @@ void initWebServer() {
 }
 
 // Callbacks for handling routes
-String status(String* _arg, uint8_t _size) {
-  String pumpStatus = pump->isActive() ? "ON" : "OFF";
-  String lightStatus = led->isActive() ? "ON" : "OFF";
-  String sensors = "<h2>Environment readings</h2><p>Temperature: " + String(dht->getTemperature()) + "&deg;C</p><p>Humidity: " + String(dht->getHumidity()) + "%</p><p>Luminosity: " + String(photo->get_perc_value()) + "%</p><p>Soil humidity: " + String(soilSensor->get_perc_value()) + "%</p>";
-  String actuators = "<h2>Actuators status</h2><p>Water pump: " + pumpStatus + "</p>" + "<p>Light: " + lightStatus + "</p>";
-  String settings = "<h2>Plant settings</h2><p>Selected plant: " + String(currPlantSetting + 1) + "</p>";
 
-  return sensors + "<hr />" + actuators + "<hr />" + settings;
+String status(String arg) {
+  return INDEX_page;
 }
 
-String setStr(bool status, String endpoint, String output) {
-  String val = status ? "OFF" : "ON";
-  return "<form action=\"" + endpoint + "\" method=\"POST\"><p>Set the status of the " + output + ":</p><input type=\"hidden\" name=\"status\" value=\"" + val + "\"><input type=\"submit\" value=\"Turn " + val + "\"></form>";
+String getTemperature(String arg) {
+  return String(dht->getTemperature());
 }
 
-String setLights(String* arg, uint8_t size) {
-  if (size > 0) {
-    bypassLED = true;
-    if (arg[0] == "ON") {
-      led->on();
-    } else {
-      led->off();
-    }
-  }
-  return statusStr(led->isActive(), "Lights");
+String getHumidity(String arg) {
+  return String(dht->getHumidity());
 }
 
-String setPump(String* arg, uint8_t size) {
-  if (size > 0) {
-    bypassPump = true;
-    if (arg[0] == "ON") {
-      pump->on();
-    } else {
-      pump->off();
-    }
-  }
-  return statusStr(pump->isActive(), "Pump");
+String getLuminosity(String arg) {
+  return String(light);
 }
 
-String statusStr(bool status, String output) {
-  return String(output + " is now " + status ? "ON" : "OFF");
+String getSoilHum(String arg) {
+  return String(soilHum);
 }
 
-String lightsControl(String* _arg, uint8_t _size) {
-  return setStr(led->isActive(), "/set_lights", "lights");
+String getPumpStatus(String arg) {
+  return String(pump->isActive() ? "ON" : "OFF");
 }
 
-String pumpControl(String* _arg, uint8_t _size) {
-  return setStr(pump->isActive(), "/set_pump", "pump");
+String getLEDStatus(String arg) {
+  return String(led->isActive() ? "ON" : "OFF");
 }
 
-String setPlant(String* arg, uint8_t size) {
-  Serial.println(arg[0] + " " + arg[1] + " " + arg[2]);
-  // if(size == 3) {
-  //   uint8_t ind = String(arg[0]).toInt();
-  //   uint8_t h = String(arg[1]).toInt();
-  //   uint8_t l = String(arg[2]).toInt();
-  //   setting[ind].setHumidity(h);
-  //   setting[ind].setLuminosity(l);
-  // }
-  return String("");
+String getCurrentSetting(String arg) {
+  return "{\"i\": " + String(currPlantSetting) + ",\"h\": " + String(setting[currPlantSetting].getHumidity()) + ",\"l\": " + String(setting[currPlantSetting].getLuminosity()) + "}";
+}
+
+String togglePumpStatus(String arg) {
+  bypassPump = true;
+  pump->toggle();
+  return getPumpStatus();
+}
+
+String toggleLEDStatus(String arg) {
+  bypassLED = true;
+  led->toggle();
+  return getLEDStatus();
+}
+
+String setCurrentPlant(String arg) {
+
 }
 
 /*
@@ -366,16 +359,4 @@ void menuAction(uint32_t command) {
       break;
   }
   setMenuDisplay();
-}
-
-size_t getTotalAvailableMemory() {
-  return ESP.getFreeHeap();
-}
-
-size_t getLargestAvailableBlock() {
-  return ESP.getMaxFreeBlockSize();
-}
-
-float getFragmentation() {
-  return 100 - getLargestAvailableBlock() * 100.0 / getTotalAvailableMemory();
 }

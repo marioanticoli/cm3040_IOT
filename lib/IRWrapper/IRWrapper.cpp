@@ -5,7 +5,7 @@ IRWrapper::IRWrapper(uint8_t pin, uint16_t debounce)
   pinMode(pin, INPUT);
   // Start the receiver
   receiver.enableIRIn();
-  Serial.print(F("Ready to receive IR signals"));
+  Serial.println(F("Ready to receive IR signals"));
 }
 
 uint32_t IRWrapper::getInput() {
