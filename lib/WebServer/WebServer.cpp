@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <uri/UriBraces.h>
 #include "WebServer.h"
+#include <ArduinoJson.h>
 
 WebServer::WebServer(uint16_t port)
   : server(port) {
@@ -11,18 +12,26 @@ void WebServer::connect(const char *ssid, const char *password) {
   WiFi.begin(ssid, password);
 }
 
-void WebServer::setRoutes(std::map<String, std::tuple<String, int, String (*)(), String>> routes) {
+void WebServer::setRoutes(std::map<String, std::tuple<String, int, String (*)(String), String>> routes) {
   this->routes = routes;
 }
 
 bool WebServer::start() {
   if (WiFi.isConnected()) {
     server.on(UriBraces("/{}"), HTTP_GET, [this]() {      
-      Serial.println("GET request");
-      handleRequest(server.pathArg(0), "GET");
+      handleRequest(server.pathArg(0), "GET", "");
     });
     server.on(UriBraces("/{}"), HTTP_POST, [this]() {
-      handleRequest(server.pathArg(0), "POST");
+      String args;
+      StaticJsonDocument<200> doc;
+      Serial.println(server.args());
+      for (uint8_t i = 0; i < server.args(); i++) {
+        doc[server.argName(i)] = server.arg(i);
+        Serial.println(server.arg(i));
+      }
+      serializeJson(doc, args);
+
+      handleRequest(server.pathArg(0), "POST", args);
     });
     server.begin();
     return true;
@@ -75,7 +84,7 @@ void WebServer::stop() {
   WiFi.disconnect();
 }
 
-void WebServer::handleRequest(String uri, String method) {
+void WebServer::handleRequest(String uri, String method, String args) {
   // Look for endpoint in the routes map
   auto it = routes.find(uri);
 
@@ -89,8 +98,9 @@ void WebServer::handleRequest(String uri, String method) {
   if (it != routes.end() && method.equalsIgnoreCase(std::get<0>(values))) {
     // Get the status from the value of the map
     status = std::get<1>(values);
-    // Get the function, pass it the parameters and their size to build the HTML with the resulting String
-    response = std::get<2>(values)();
+
+    // Get the function, pass it the parameters to build the HTML with the resulting String
+    response = std::get<2>(values)(args);
     responseType = std::get<3>(values);
   } else {
     // If no routes found
@@ -98,8 +108,6 @@ void WebServer::handleRequest(String uri, String method) {
     responseType = "text/html";
     response = "<h1>Not Found</h1>";
   }
-
-  Serial.println("send response now!!!");
 
   server.send(status, responseType, response);
 }

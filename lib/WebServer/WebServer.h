@@ -10,10 +10,10 @@
 
 class WebServer {
 private:
-  std::map<String, std::tuple<String, int, String (*)(), String>> routes;
+  std::map<String, std::tuple<String, int, String (*)(String), String>> routes;
   ESP8266WebServer server;
 
-  void handleRequest(String, String);
+  void handleRequest(String, String, String);
 
 public:
   // Initialise the webserver to given port (default 80)
@@ -31,7 +31,7 @@ public:
   // Accepts incoming requests
   void listen();
   // Set user-defined routes
-  void setRoutes(std::map<String, std::tuple<String, int, String (*)(), String>>);
+  void setRoutes(std::map<String, std::tuple<String, int, String (*)(String), String>>);
 };
 
 #endif
