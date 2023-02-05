@@ -104,7 +104,7 @@ void setup() {
 
   soilHum = soilSensor->get_perc_value();
   mux->toggle();
-  light = photo->get_perc_value();  
+  light = photo->get_perc_value();
   mux->toggle();
 }
 
@@ -118,11 +118,11 @@ void loop() {
   dht->update();
 
   // Read one analog sensor every ANALOG_SENSOR_PERIOD_MS
-  if(now % (ANALOG_SENSOR_PERIOD_MS * 2) == 0) {
+  if (now % (ANALOG_SENSOR_PERIOD_MS * 2) == 0) {
     soilHum = soilSensor->get_perc_value();
     mux->toggle();
   } else if (now % ANALOG_SENSOR_PERIOD_MS == 0) {
-    light = photo->get_perc_value();  
+    light = photo->get_perc_value();
     mux->toggle();
   }
 
@@ -135,12 +135,12 @@ void loop() {
     pump->off();
   }
 
-  if(!bypassLED) {
+  if (!bypassLED) {
     if (light < setting[currPlantSetting].getLuminosity()) {
       led->on();
     } else {
       led->off();
-    }    
+    }
   }
 
   // Check if IR received a command and react if valid
@@ -198,7 +198,7 @@ void initWebServer() {
     { "current-setting", std::make_tuple("GET", 200, &getCurrentSetting, "text/json") },
     { "toggle-pump", std::make_tuple("POST", 200, &togglePumpStatus, "text/plain") },
     { "toggle-led", std::make_tuple("POST", 200, &toggleLEDStatus, "text/plain") },
-    { "update-plant", std::make_tuple("POST", 200, &updatePlant, "text/plain")}    
+    { "update-plant", std::make_tuple("POST", 200, &updatePlant, "text/plain") }
   };
 
   ws->setRoutes(r);
@@ -252,17 +252,22 @@ String getCurrentSetting(String args) {
 String togglePumpStatus(String args) {
   bypassPump = true;
   pump->toggle();
-  return getPumpStatus(args);
+  return getPumpStatus("");
 }
 
 String toggleLEDStatus(String args) {
   bypassLED = true;
   led->toggle();
-  return getLEDStatus(args);
+  return getLEDStatus("");
 }
 
 String updatePlant(String args) {
-  return args;
+  StaticJsonDocument<200> doc;
+  deserializeJson(doc, args);
+  currPlantSetting = doc["i"];
+  setting[currPlantSetting].setHumidity(doc["h"]);
+  setting[currPlantSetting].setLuminosity(doc["l"]);
+  return getCurrentSetting("");
 }
 
 /*

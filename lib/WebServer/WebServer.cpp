@@ -2,7 +2,6 @@
 #include <ESP8266WiFi.h>
 #include <uri/UriBraces.h>
 #include "WebServer.h"
-#include <ArduinoJson.h>
 
 WebServer::WebServer(uint16_t port)
   : server(port) {
@@ -22,16 +21,7 @@ bool WebServer::start() {
       handleRequest(server.pathArg(0), "GET", "");
     });
     server.on(UriBraces("/{}"), HTTP_POST, [this]() {
-      String args;
-      StaticJsonDocument<200> doc;
-      Serial.println(server.args());
-      for (uint8_t i = 0; i < server.args(); i++) {
-        doc[server.argName(i)] = server.arg(i);
-        Serial.println(server.arg(i));
-      }
-      serializeJson(doc, args);
-
-      handleRequest(server.pathArg(0), "POST", args);
+      handleRequest(server.pathArg(0), "POST", server.arg("plain"));
     });
     server.begin();
     return true;
