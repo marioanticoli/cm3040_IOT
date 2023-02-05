@@ -10,18 +10,14 @@
 
 class WebServer {
 private:
-  // Map of tuple containing method, status code, pointer to function
-  std::map<String, std::tuple<String, int, String (*)(String*, uint8_t), String*, uint8_t>> routes;
+  std::map<String, std::tuple<String, int, String (*)(), String>> routes;
   ESP8266WebServer server;
-  String openHTML;
-  String closeHTML;
 
   void handleRequest(String, String);
-  String buildHTML(String);
 
 public:
   // Initialise the webserver to given port (default 80)
-  WebServer(String, String, uint16_t = 80);
+  WebServer(uint16_t = 80);
   // Connect to the wifi
   void connect(const char*, const char*);
   // Start webserver
@@ -35,7 +31,7 @@ public:
   // Accepts incoming requests
   void listen();
   // Set user-defined routes
-  void setRoutes(std::map<String, std::tuple<String, int, String (*)(String*, uint8_t), String*, uint8_t>>);
+  void setRoutes(std::map<String, std::tuple<String, int, String (*)(), String>>);
 };
 
 #endif
