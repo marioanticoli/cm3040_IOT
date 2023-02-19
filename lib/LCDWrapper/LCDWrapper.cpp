@@ -26,8 +26,7 @@ bool LCDWrapper::display(uint8_t line, uint8_t column, String msg) {
 }
 
 void LCDWrapper::clear() {
-  lastMsg[0] = EMPTY_LINE;
-  lastMsg[1] = EMPTY_LINE;
+  for(uint8_t i = 0; i < ARRAY_MAX_SIZE; i++) lastMsg[i] = EMPTY_LINE;
   lcd.clear();
 }
 
@@ -47,4 +46,8 @@ void LCDWrapper::toggle() {
     lcd.clear();
   }
   on = !on;
+}
+
+bool LCDWrapper::isOn() {
+  return on;
 }

@@ -31,11 +31,6 @@ protected:
     pin->setValue(HIGH);
   }
 
-  // optional
-  void teardown() override {
-    TestOnce::teardown();
-  }
-
   void assertIsOffAtBootPinHigh() {
     assertFalse(relay->isActive());
   }

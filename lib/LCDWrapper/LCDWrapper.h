@@ -6,13 +6,15 @@
 
 // Wrapper class for LCD
 
+#define ARRAY_MAX_SIZE 10 // oversized String array
+
 class LCDWrapper {
 private:
   uint8_t cols;
   uint8_t rows;
   LiquidCrystal_I2C lcd;
   bool on;
-  String lastMsg[2];
+  String lastMsg[ARRAY_MAX_SIZE];
 
 public:
   // Initialise an LCD at an address with given rows and columns
@@ -25,6 +27,8 @@ public:
   void clear();
   // Clear the line
   void clear(uint8_t);
+  // Returns display status
+  bool isOn();
 };
 
 #endif
