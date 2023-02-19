@@ -184,8 +184,6 @@ WebServer block
 void initWebServer() {
   ws = new WebServer();
   // Create routes
-  String params[1] = { "Status" };
-  String params_plant[3] = { "plant", "humidity", "luminosity" };
   // map<endpoint, tuple<method, status, callback, response_type>>
   std::map<String, std::tuple<String, int, String (*)(String), String>> r = {
     { "", std::make_tuple("GET", 200, &status, "text/html") },
