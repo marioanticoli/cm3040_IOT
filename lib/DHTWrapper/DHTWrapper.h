@@ -20,8 +20,6 @@ public:
   float getTemperature();
   // Returns the humidity
   float getHumidity();
-  // Returns a formatted string with temperature and humidity
-  String toString();
 };
 
 #endif
