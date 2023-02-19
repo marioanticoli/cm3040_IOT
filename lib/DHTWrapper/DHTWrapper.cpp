@@ -21,6 +21,3 @@ float DHTWrapper::getHumidity() {
   return humidity;
 }
 
-String DHTWrapper::toString() {
-  return String("Temp.: ") + String(temperature, 2) + String("C - Hum.: ") + String(humidity, 2) + String("%");
-}
