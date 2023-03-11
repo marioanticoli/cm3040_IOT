@@ -2,7 +2,7 @@ const char INDEX_page[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="refresh" content="30">
+    <meta http-equiv="refresh" content="5">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
   </head>
   <body>

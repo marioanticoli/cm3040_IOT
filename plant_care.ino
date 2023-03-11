@@ -74,7 +74,7 @@ bool menuActive;
 String line[2];
 uint currPlantSetting;
 bool bypassLED, bypassPump;
-
+bool readLight;
 long soilHum, light;
 
 void setup() {
@@ -103,9 +103,9 @@ void setup() {
   menuActive = false;
 
   soilHum = soilSensor->get_perc_value();
-  mux->toggle();
+  switchMux();
   light = photo->get_perc_value();
-  mux->toggle();
+  switchMux();
 }
 
 void loop() {
@@ -117,13 +117,14 @@ void loop() {
   // Read DHT11
   dht->update();
 
-  // Read one analog sensor every ANALOG_SENSOR_PERIOD_MS
-  if (now % (ANALOG_SENSOR_PERIOD_MS * 2) == 0) {
-    soilHum = soilSensor->get_perc_value();
-    mux->toggle();
-  } else if (now % ANALOG_SENSOR_PERIOD_MS == 0) {
-    light = photo->get_perc_value();
-    mux->toggle();
+  // Every ANALOG_SENSOR_PERIOD_MS read alternatively one analog sensor (light, soil humidity)
+  if (now % ANALOG_SENSOR_PERIOD_MS == 0) {
+    if (readLight) {
+      light = photo->get_perc_value();
+    } else {
+      soilHum = soilSensor->get_perc_value();
+    }
+    switchMux();
   }
 
   // Check if values for humidity and light reach current target
@@ -173,7 +174,11 @@ void loop() {
   }
 }
 
-
+void switchMux() {
+  readLight = !readLight;
+  mux->toggle();
+  delay(100);
+}
 
 /*
 *******************
