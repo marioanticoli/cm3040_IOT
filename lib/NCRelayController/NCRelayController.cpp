@@ -4,9 +4,9 @@
 
 NCRelayController::NCRelayController(Pin* pin)
   : RelayController(pin) {
-    pin->doPinMode(OUTPUT);
     off();
-  }
+    pin->doPinMode(OUTPUT);
+ }
 
 NCRelayController::NCRelayController(uint8_t pin)
   : NCRelayController(new DigitalPin(pin)) {
