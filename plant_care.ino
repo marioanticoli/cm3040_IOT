@@ -38,6 +38,7 @@
 #define LCD_PERIOD_MS 500
 #define PUMP_PERIOD_MS 10000
 #define ANALOG_SENSOR_PERIOD_MS 2500
+#define MUX_SWITCH 250
 
 #define PLANT_SIZE 3
 
@@ -118,10 +119,10 @@ void loop() {
   dht->update();
 
   // Read one analog sensor every ANALOG_SENSOR_PERIOD_MS
-  if (now % (ANALOG_SENSOR_PERIOD_MS * 2) == 0) {
+  if (now % ANALOG_SENSOR_PERIOD_MS == 0) {
     soilHum = soilSensor->get_perc_value();
     mux->toggle();
-  } else if (now % ANALOG_SENSOR_PERIOD_MS == 0) {
+    delay(MUX_SWITCH);
     light = photo->get_perc_value();
     mux->toggle();
   }
@@ -129,9 +130,9 @@ void loop() {
   // Check if values for humidity and light reach current target
   // better to pour water slowly
   if (now % PUMP_PERIOD_MS == 0 && soilHum < setting[currPlantSetting].getHumidity() && !bypassPump) {
-    // turn on for 50ms not to flood the soil
+    // turn on for 100ms not to flood the soil
     pump->on();
-    delay(50);
+    delay(100);
     pump->off();
   }
 
